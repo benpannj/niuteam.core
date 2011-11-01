@@ -89,4 +89,9 @@ public class OpfResource {
 		}
 	}
 	public String getNcx(){return ncx_href;}
+	
+	public void addItem(String href, byte[] data){
+		String id = href;
+		String type = CONST.MIME_HTM;
+	}
 }
