@@ -23,7 +23,7 @@ public class EpubTest {
 		Epub bk = new Epub();
 		bk.readEpub(in, CONST.ENCODING);
 //		fail("Not yet implemented");
-		CONST.log.info("debug {} ", epubFile.getAbsoluteFile() );
+		CONST.log.info("debug git test {} ", epubFile.getAbsoluteFile() );
 	}
 	@Test
 	public void testReadEpubFile() throws Exception {
