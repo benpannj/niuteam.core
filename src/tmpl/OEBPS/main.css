@@ -1,0 +1,17 @@
+h1 {
+	margin: 1em 4px 1em 0px;
+	text-align: center;
+font-size:x-large;
+}
+h2 {
+	border-bottom: 1px solid gray;
+	color: gray;
+	margin: 1em 6px 1em 0px;
+	text-align: left;
+}
+p {
+	text-align: justify;
+	text-indent: 2em;
+	line-height:130%;
+	margin-bottom:0.8em;
+}

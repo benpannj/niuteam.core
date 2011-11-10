@@ -1,31 +1,41 @@
 package niuteam.book.epub;
 
+import java.awt.print.Book;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import niuteam.book.core.Book;
 import niuteam.book.core.CONST;
-import niuteam.book.core.Metadata;
-import niuteam.book.core.Resource;
-import niuteam.util.DomUtil;
+import niuteam.book.core.FileResource;
+import niuteam.book.core.StringResource;
+import niuteam.book.core.ZipEntryResource;
 import niuteam.util.IOUtil;
+import niuteam.util.XmlUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class Epub {
 	private Book book;
-	public Book readEpub(File epub) throws IOException {
-		book = new Book();
+//	private boolean dirty = true;
+	// 
+	private Document docContainer=null;
+	private OpfResource opf;
+	private NcxResource ncx;
+	
+	public boolean isDirty(){return opf.isDirty();}
+	
+	public void readEpub(File epub) throws IOException {
+//		private ZipFile zf = null;;
 		ZipFile zf = new ZipFile(epub);
 		ZipEntry ze;
 		// mimetype
@@ -33,131 +43,133 @@ public class Epub {
 		ze = zf.getEntry(CONST.FILE_ROOT);
 		if (ze == null) {
 			CONST.log.warn("not valid epub ! {} ", epub.getAbsolutePath());
-			return null;
+			return;
 		}
 		//
 		ze = new ZipEntry(CONST.FILE_INFO);
-		Document docContainer = DomUtil.stream2doc(zf.getInputStream(ze));
+		docContainer = XmlUtil.stream2doc(zf.getInputStream(ze));
 		Element rootFileElement = (Element) ((Element) docContainer.getDocumentElement().getElementsByTagName("rootfiles").item(0)).getElementsByTagName("rootfile").item(0);
 		String opf_href = rootFileElement.getAttribute("full-path");
 		// OPF file
-		String base_path = "";
 		ze = new ZipEntry(opf_href);
-		Document docOpf = DomUtil.stream2doc(zf.getInputStream(ze));
-		OpfResource opf = new OpfResource();
-		opf.readXml(docOpf);
-		int pos = opf_href.lastIndexOf("/");
-		if (pos != -1){
-			base_path = opf_href.substring(0, pos+1);
-		}
+		Document docOpf = XmlUtil.stream2doc(zf.getInputStream(ze));
+		this.opf = new OpfResource();
+		opf.readXml(opf_href, docOpf, zf);
 		// NCX
-		String ncx_href = base_path + opf.getNcx();
-		ze = new ZipEntry(ncx_href);
-		Document docNcx = DomUtil.stream2doc(zf.getInputStream(ze));
+		Document docNcx = null;
+		String ncx_href = opf.getNcx();
+		if (ncx_href != null) {
+			ze = new ZipEntry(ncx_href);
+			docNcx = XmlUtil.stream2doc(zf.getInputStream(ze));
+		}
 		if (docNcx == null){
-			CONST.log.error("no ncx file: {} ", ncx_href);
+			CONST.log.error("[ERROR] bad ncx file: {}, epub:  {} ", ncx_href,  epub.getAbsoluteFile() );
+//			this.ncx = new NcxResource();
 		} else {
-		NcxResource ncx = new NcxResource();
-		ncx.readXml(docNcx);
+			this.ncx = new NcxResource();
+			ncx.readXml(docNcx);
 		}
-
-		// String packageResourceHref = getPackageResourceHref(resources);
-//		Resource packageResource = processPackageResource(packageResourceHref, result, resources);
-//		result.setOpfResource(packageResource);
-//		Resource ncxResource = processNcxResource(packageResource, result);
-//		result.setNcxResource(ncxResource);
-//		result = postProcessBook(result);
-		return book;
+//		for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
+//			ze = (ZipEntry)entries.nextElement();
+//			String name = ze.getName();
+//			if (name.equals(CONST.FILE_ROOT)){
+//				continue;
+//			} else if (name.equals(CONST.FILE_INFO)){
+//				continue;
+//			} else if (name.equals(ncx_href)){
+//				continue;
+//			} else if (name.equals(opf_href)){
+//				continue;
+//			}
+////			resultStream.putNextEntry(ze);
+////			InputStream ins = zf.getInputStream(ze);
+////			IOUtil.copy(ins, resultStream);
+////			ins.close();
+//			ZipEntryResource res = new ZipEntryResource(item_href);
+//			res.loadEntry(zf, id, type);
+//
+//		}
 	}
-
-	public Book readEpub(ZipInputStream in, String encoding) throws IOException {
-		book = new Book();
-		readResources(in, encoding);
-		// String packageResourceHref = getPackageResourceHref(resources);
-//		Resource packageResource = processPackageResource(packageResourceHref, result, resources);
-//		result.setOpfResource(packageResource);
-//		Resource ncxResource = processNcxResource(packageResource, result);
-//		result.setNcxResource(ncxResource);
-//		result = postProcessBook(result);
-		return book;
-	}
-	private void readResources(ZipInputStream in, String defaultHtmlEncoding) throws IOException {
-		String opf_href = null;
-		String ncx_href = null;
-		for(ZipEntry zipEntry = in.getNextEntry(); zipEntry != null; zipEntry = in.getNextEntry()) {
-			String name = zipEntry.getName();
-			CONST.log.info(" name :  " + name );
-			if(zipEntry.isDirectory()) {
-				continue;
-			} else if (CONST.FILE_ROOT.equals(name)){
-				continue;
-			} else if (CONST.FILE_INFO.equals(name)){
-				try {
-					Resource resource = new Resource(in, zipEntry.getName());
-					Document document = DomUtil.getAsDocument(resource);
-					Element rootFileElement = (Element) ((Element) document.getDocumentElement().getElementsByTagName("rootfiles").item(0)).getElementsByTagName("rootfile").item(0);
-					String result = rootFileElement.getAttribute("full-path");
-//					CONST.log.info(" full path :  " + result );
-					if (opf_href == null) {
-						opf_href= result;
-					} else if (opf_href.equals(result)){
-						// do nothing
-					} else {
-						CONST.log.debug("not same ! opf name {} ,  {}", result, opf_href);
-					}
-				} catch (Exception e) {
-					CONST.log.error(e.getMessage(), e);
-				}
-				
-				continue;
-			} else if (name.endsWith(".opf")){
-				book.opf = new Resource(in, name);
-				if (opf_href != null && !opf_href.equals(name)){
-					CONST.log.debug("not same ! opf name {} ,  {}", name, opf_href);
-//					book.opf.setHref(CONST.FILE_OPF);
-				}
-			} else if (name.endsWith(".ncx")){
-				book.ncx = new Resource(in, name);
-			} else {
-				Resource resource = new Resource(in, name);
-				book.resources.put(resource.getHref(), resource);
-			}
-		}
-	}
-	public Book create(String title, String auth, String lang){
-		book = new Book();
-		book.metadata.set(Metadata.DCTags.title, title);
-		book.metadata.set(Metadata.DCTags.creator, auth);
-		book.metadata.set(Metadata.DCTags.language, lang);
-//		metadata.auth = auth;
-//		metadata.title = title;
-//		metadata.lang = lang;
-		return book;
-	}
-	
-	public void write(OutputStream out) throws IOException {
+	public void writeEpub(File outFile) throws Exception {
+		OutputStream out = new FileOutputStream(outFile);
+		
 		ZipOutputStream resultStream = new ZipOutputStream(out);
+		// FILE_ROOT
 		writeMimeType(resultStream);
-		writeContainer(resultStream);
-		// OEBPS/content.opf
-		writeResource(book.opf, resultStream);
-		//initTOCResource(book);
-		// OEBPS/toc.ncx
-		writeResource(book.ncx, resultStream);
-		// htm and css
-		// writePackageDocument(book, resultStream);
-		for(Resource resource: book.resources.values()) {
-			CONST.log.info( "" + resource);
-			writeResource(resource, resultStream);
+		// FILE_INFO
+		if (this.docContainer == null){
+			resultStream.putNextEntry(new ZipEntry(CONST.FILE_INFO));
+			InputStream ins = IOUtil.loadTemplate(CONST.FILE_INFO);
+			IOUtil.copy(ins, resultStream);
+			ins.close();
+//			Document docContainer = DomUtil.stream2doc(Template.load(CONST.FILE_INFO));
+//			writeXml(CONST.FILE_INFO, docContainer, resultStream);
+		} else {
+			writeXml(CONST.FILE_INFO, docContainer, resultStream);
 		}
+		// opf
+		String opf_href = opf.getOpfHref();
+		writeXml(opf_href, opf.getDoc(), resultStream);
+		// ncx
+		String ncx_href = opf.getNcx();
+		writeXml(ncx_href, ncx.getDoc(), resultStream);
+		// write opf items.
+		this.opf.writeItem(resultStream);
 		// close
 		resultStream.close();
+		out.close();
 	}
+	private void writeXml(String href, Document doc, ZipOutputStream resultStream)
+			throws IOException {
+		if(doc == null) {
+			return;
+		}
+		try {
+			resultStream.putNextEntry(new ZipEntry(href));
+			XmlUtil.node2Stream(doc, resultStream);
+			
+		} catch(Exception e) {
+			CONST.log.error(e.getMessage(), e);
+		}
+	}	
+	public void create(String title, String auth, String lang){
+		this.opf = new OpfResource();
+		this.opf = new OpfResource();
+		Document docOpf = XmlUtil.stream2doc(IOUtil.loadTemplate(CONST.FILE_OPF));
+		opf.readXml(CONST.FILE_OPF, docOpf, null);
+		opf.setMetadata(CONST.DCTags.title, title);
+		opf.setMetadata(CONST.DCTags.language, lang);
+
+		String format = "yyyyMMdd-HHmmss";
+		SimpleDateFormat f = new SimpleDateFormat(format);
+		String s_now = f.format(new Date());
+		String bk_uid = "ID:"+s_now;
+		// ISDB 13 bit ISBN 978-7-98181-728-6;
+		opf.setMetadata(CONST.DCTags.identifier, bk_uid);
+		
+		// optional meta
+		opf.setMetadata(CONST.DCTags.creator, auth);
+		opf.setMetadata(CONST.DCTags.date, s_now.substring(0, 4));
+		
+		this.ncx = new NcxResource();
+		Document docNcx = XmlUtil.stream2doc(IOUtil.loadTemplate(CONST.FILE_NCX));
+		ncx.readXml(docNcx);
+		ncx.setUid(bk_uid);
+		ncx.setTitle(title);
+		// 
+	}
+
+	public void setMetadata(String key, String val){
+		this.opf.setMetadata(key, val);
+	}
+	
+
 	// root mimetype
 	private void writeMimeType(ZipOutputStream resultStream) throws IOException {
 		ZipEntry mimetypeZipEntry = new ZipEntry(CONST.FILE_ROOT);
 		mimetypeZipEntry.setMethod(ZipEntry.STORED);
-		byte[] mimetypeBytes = CONST.MIME_EPUB.getBytes();
+		
+		byte[] mimetypeBytes = CONST.MIME.EPUB.getBytes();
 		mimetypeZipEntry.setSize(mimetypeBytes.length);
 		mimetypeZipEntry.setCrc(calculateCrc(mimetypeBytes));
 		resultStream.putNextEntry(mimetypeZipEntry);
@@ -168,42 +180,20 @@ public class Epub {
 		crc.update(data);
 		return crc.getValue();
 	}
-	/**
-	 * Writes the META-INF/container.xml file.
-	 * 
-	 * @param resultStream
-	 * @throws IOException
-	 */
-	private void writeContainer(ZipOutputStream resultStream) throws IOException {
-		resultStream.putNextEntry(new ZipEntry(CONST.FILE_INFO));
-		Writer out = new OutputStreamWriter(resultStream);
-		out.write("<?xml version=\"1.0\"?>\n");
-		out.write("<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">\n");
-		out.write("\t<rootfiles>\n");
-		out.write("\t\t<rootfile full-path=\"OEBPS/content.opf\" media-type=\"application/oebps-package+xml\"/>\n");
-		out.write("\t</rootfiles>\n");
-		out.write("</container>");
-		out.flush();
+
+
+	// add local file as item
+	public void addItem(File f) throws Exception{
+		if (!f.exists() ) return;
+		String name = f.getName();
+		FileResource res = new FileResource(name);
+		res.loadFile(f);
+		opf.addItem(res);
 	}
-	/**
-	 * Writes the resource to the resultStream.
-	 * 
-	 * @param resource
-	 * @param resultStream
-	 * @throws IOException
-	 */
-	private void writeResource(Resource resource, ZipOutputStream resultStream)
-			throws IOException {
-		if(resource == null) {
-			return;
-		}
-		try {
-			resultStream.putNextEntry(new ZipEntry(resource.getHref()));
-			InputStream inputStream = resource.getInputStream();
-			IOUtil.copy(inputStream, resultStream);
-			inputStream.close();
-		} catch(Exception e) {
-			CONST.log.error(e.getMessage(), e);
-		}
-	}	
+	public void addString(String href, String data) throws Exception{
+		StringResource res = new StringResource(href);
+		res.loadString(data);
+		opf.addItem(res);
+	}
+	
 }

@@ -126,5 +126,10 @@ public class IOUtil {
 		result.append(']');
 		return result.toString();
 	}
+	public static InputStream loadTemplate(String res){
+		InputStream in = null;
+		in = IOUtil.class.getResourceAsStream("/tmpl/"+res);
+		return in;
+	}
 	
 }
