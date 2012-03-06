@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
@@ -17,12 +19,18 @@ import java.util.regex.Pattern;
 
 import niuteam.util.IOUtil;
 
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Whitelist;
+
 public class XhtmlDoc {
 	private String html;
 	private String content;
 	private String title;
 	public String getHtml(){
 		return html;
+	}
+	public XhtmlDoc(){
+		html = null;
 	}
 	public XhtmlDoc(File f, String encoding) throws Exception{
 		StringWriter out = new StringWriter();
@@ -33,16 +41,28 @@ public class XhtmlDoc {
 		InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
 		StringWriter out2 = new StringWriter();
 		IOUtil.copy(new InputStreamReader(ins, "utf-8"), out2 );
+
+
 		StringBuffer buf = new StringBuffer(out2.toString());
 
+		if (title == null) {
+			title = fout.getName();
+		}
 		str_rpl(buf, "<h2>", "</h2>", "<h2>"+title + "</h2>");
+		if (content == null){
+			content = html;
+		}
 		str_rpl(buf, "<p>", "</p>", "<p>"+content + "</p>");
 
 		// clean html
+		// 
 		str_rpl(buf, "&nbsp;", null, " ");
 		str_rpl(buf, "<link", "</link>", "");
+		str_rpl(buf, "<b>", null, " ");
+		str_rpl(buf, "</b>", null, " ");
 
 		html = buf.toString();
+
 		// String strTarget = new String (chapterText.getBytes(Charset.forName("utf-8")), "utf-8");
 //		File fu = new File("/tmp", "test_h2_utf8.htm" );
 //		CONST.log.info("" + fu.getAbsolutePath());
@@ -51,13 +71,73 @@ public class XhtmlDoc {
 		fwu.flush();
 		fwu.close();
 	}
-	public void analyzeTitle(String open, String close){
+	public void analyzeTxt(String t){
+		title = t;
+		content = txt2htm(html);
+	}
+	public void analyzeTitle(String open, String close, String df){
 		title = getStringBetween(html, open, close);
+		if (title == null || title.length() == 0){
+			title = df;
+		}
 	}
 	public void analyzeContent(String open, String close){
 		content = getStringBetween(html, open, close);
+		// <td class="style4">
+		if (content == null || content.length() == 0){
+			content = getStringBetween(html, "<td class=\"style4\">", "</td>");
+		}
+		if (content == null || content.length() == 0){
+			content = html;
+		}
+		
+		content = cleanHtml(content);
+		//  ALIGN="CENTER"
+//		content = regex_rpl(content, "<[/]?(font|link|script|span|xml|del|ins|[ovwxp]:\\w+)[^>]*?>", "");
+//		content = regex_rpl(content, "<([^>]*)(?:class|align|lang|style|link|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
+//		content = regex_rpl(content, "\\s>", ">");
+
 	}
-	public static String downloadUrlContent(String urlStr, String encoding)
+	public void analyzeContentMulti(String open, String close, boolean parag){
+		if (html == null) return;
+		if (open == null){
+			content = html;
+			return;
+		}
+		int startIndex = html.indexOf(open);
+		if (startIndex <0){
+			content = html;
+			return ;
+		}
+		int start_len = open.length();
+		startIndex +=start_len;
+		int endIndex = 0;
+		if (close != null){
+			endIndex = html.indexOf(close, startIndex);
+		}
+		if (endIndex < startIndex){
+			content = html.substring(startIndex);
+			return;
+		}
+		StringBuffer buf = new StringBuffer();
+		while (endIndex > startIndex) {
+			if (parag) buf.append("<p>");
+			buf.append(html.substring(startIndex, endIndex) );
+			if (parag) buf.append("</p>");
+			startIndex = html.indexOf(open, endIndex);
+			if (startIndex == -1) break;
+			endIndex = html.indexOf(close, startIndex);
+		}
+		
+		content = buf.toString();
+		content = cleanHtml(content);
+		//  ALIGN="CENTER"
+//		content = regex_rpl(content, "<[/]?(font|link|script|span|xml|del|ins|[ovwxp]:\\w+)[^>]*?>", "");
+//		content = regex_rpl(content, "<([^>]*)(?:class|align|lang|style|link|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
+//		content = regex_rpl(content, "\\s>", ">");
+
+	}
+	public String downloadUrlContent(String urlStr, String encoding)
 			throws Exception {
 		URL url = new URL(urlStr);
 		URLConnection urlc = url.openConnection();
@@ -69,7 +149,7 @@ public class XhtmlDoc {
 		urlc.setRequestProperty("Accept-Language", "zh-cn,zh;q=0.5");
 		urlc.setRequestProperty("Accept-Charset", "GB2312,utf-8;q=0.7,*;q=0.7");
 		urlc.setConnectTimeout(5000);
-		urlc.connect();
+//		urlc.connect();
 		StringBuilder sb = new StringBuilder(4096);
 		BufferedReader in = new BufferedReader(new InputStreamReader(
 				urlc.getInputStream(), encoding));
@@ -79,7 +159,8 @@ public class XhtmlDoc {
 		}
 		in.close();
 //		System.out.println(urlStr);
-		return sb.toString().trim();
+		html = sb.toString().trim();
+		return html;
 	}	
 	public static String html2txt(String s) {
 		if (s != null) {
@@ -88,7 +169,70 @@ public class XhtmlDoc {
 		}
 		return "";
 	}
-	public void str_rpl(StringBuffer buf, String patt_start, String patt_end, String rpl){
+	public static String txt2htm(String s) {
+		if (s == null) return null;
+		StringBuilder sb = new StringBuilder(4096);
+		BufferedReader in = new BufferedReader(new StringReader(s) );
+		String line;
+		sb.append("<p>");
+		try {
+			while ((line = in.readLine()) != null) {
+				line.trim();
+				String end = "。";
+				sb.append(line);
+				if (line.endsWith(end)) {
+					sb.append("</p>").append("<p>");
+				}
+			}
+			sb.append("</p>");
+			in.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+//		System.out.println(urlStr);
+		return sb.toString().trim();
+	}
+//	public static void cleanHtml(StringBuffer buf, String[] keep, String rpl){
+//		if (buf == null || keep == null) return;
+//		int pos = 0;
+//		int len = buf.length();
+//		while (pos< len){
+//			char c = buf.charAt(pos);
+//			if (c == '<'){
+//				
+//			}
+//		}
+////		int patt_len = (patt_end==null)? 0 : patt_end.length();
+////		int rpl_len = (rpl == null) ? 0 : rpl.length();
+//		pos = buf.indexOf("<");
+//		while (pos > 0){
+//			int end = -1;
+//			// find end pos
+//			if (patt_len == 0){
+//				end = pos++;
+//			} else {
+//				end = buf.indexOf(patt_end, pos);
+//				if (end > pos)
+//					end += patt_len;
+//			}
+//			if (end >0){
+//				// replace or del
+//				if (rpl_len > 0){
+//					buf.replace(pos, end, rpl);
+//					end = pos + rpl_len;
+//				} else {
+//					buf.delete(pos, end);
+//					end = pos;
+//				}
+//				// next start
+//				pos = buf.indexOf(patt_start, end);
+//			} else {
+//				pos = -1; 
+//			}
+//		}
+//	}
+	public static void str_rpl(StringBuffer buf, String patt_start, String patt_end, String rpl){
 		int pos = -1;
 		if (buf == null || patt_start == null) return;
 		int patt_len = (patt_end==null)? 0 : patt_end.length();
@@ -136,28 +280,43 @@ public class XhtmlDoc {
 			}
 		}
 	}
-	private String regex_rpl(String src, String patt, String rpl){
+	private static  String regex_rpl(String src, String patt, String rpl){
 		Pattern pattern = Pattern.compile(patt, Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(src);
 		return matcher.replaceAll(rpl);
 	}
-	public String cleanHtml(String html){
+	public static String cleanHtml(String html){
+		
+//		Whitelist epub = new Whitelist();
+//		epub.addTags("p","pre","br","li","ul","h1","h2","h3","html","head","link","body");
+//		String content = Jsoup.clean(html, epub);
+//		if (content != null)
+//			return content;
+		
 		String s;
 		s = regex_rpl(html, "&nbsp;", " ");
 //		s = regex_rpl(s, "\\s+", " ");
 		s = regex_rpl(s, "\\s>", ">");
 		StringBuffer buf = new StringBuffer(s);
+		str_rpl(buf, "<!--", "-->", "");
 		str_rpl(buf, "<script ", "</script>", "");
-		str_rpl(buf, "<link", "</link>", "");
+//		str_rpl(buf, "<link", "</link>", "");
+		str_rpl(buf, "<style", "</style>", "");
+		str_rpl(buf, "<td ", ">", "<td>");
+		str_rpl(buf, "<tr ", ">", "<tr>");
+		str_rpl(buf, "<p ", ">", "<p>");
+		str_rpl(buf, "<a ", ">", "<a>");
+		str_rpl(buf, "<div ", ">", "<div>");
+		
 		s = buf.toString();
 		// "input", "font", "textarea", "br","table","tr","td","tbody","a", "form"
 		// "link", "script"
-		s = regex_rpl(s, "<[/]?(font|link|script|span|xml|del|ins|[ovwxp]:\\w+)[^>]*?>", "");
+		s = regex_rpl(s, "<[/]?(font|script|strong|span|xml|del|ins|[ovwxp]:\\w+)[^>]*?>", "");
 //		s = regex_rpl(s, "<[/]?(script\\w+)[^>]*?>", "");
 
-		s = regex_rpl(s, "<([^>]*)(?:class|lang|style|link|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
+		s = regex_rpl(s, "<([^>]*)(?:class|style|link|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
 		
-		s = regex_rpl(s, "<([^>]*)(?:class|lang|style|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
+//		s = regex_rpl(s, "<([^>]*)(?:class|lang|style|size|face|[ovwxp]:\\w+)=(?:'[^']*'|\"\"[^\"\"]*\"\"|[^\\s>]+)([^>]*)>", "<$1$2>");
 //		s = regex_rpl(s, "\\s+", " ");
 		s = regex_rpl(s, "\\s>", ">");
 
@@ -192,16 +351,19 @@ public class XhtmlDoc {
 	}
 	public static String getStringBetween(String src, String startText,
 			String endText) {
-		if (src != null && src.contains(startText)) {
-			int startIndex = src.indexOf(startText);
-			int endIndex = src.indexOf(endText, startIndex);
-			if (endIndex > startIndex) {
-				return src.substring(startIndex + startText.length(), endIndex);
-
-			}
+		if (src == null || startText == null){
+			return src;
 		}
-		return "";
-
+		int startIndex = src.indexOf(startText);
+		if (startIndex <0){
+			return "";
+		}
+		int endIndex = src.indexOf(endText, startIndex);
+		if (endIndex > startIndex) {
+			return src.substring(startIndex + startText.length(), endIndex);
+		}else {
+			return src.substring(startIndex + startText.length());
+		}
 	}
 	public static String getStringLastBetween(String src, String startText,
 			String endText) {
@@ -233,20 +395,20 @@ public class XhtmlDoc {
 
 		return chapterList.toArray(new String[0]);
 	}
-	public static void addChapter(String HtmlBookId,
-			String chapterId) throws Exception {
-		String chapterUrl = "http://book.com/book/chapter_" + HtmlBookId + "_"
-				+ chapterId + ".html";
-		String chapterHtml = downloadUrlContent(chapterUrl, "utf-8");
-		String chapterTitle = getStringLastBetween(chapterHtml,"<h1>", "</h1>");
-		String chapterText = getStringLastBetween(chapterHtml, "","");
-		chapterText = chapterText.replaceAll("</p><p>", "\n");
-		chapterText = chapterText.replaceAll("<p>", "");
-		chapterText = html2txt(chapterText.replaceAll("</p>", "")).trim();
-		String chapterTextArr[] = chapterText.split("\n");
-		addChapter(HtmlBookId, chapterId, chapterTitle, chapterTextArr);
-
-	}
+//	public static void addChapter(String HtmlBookId,
+//			String chapterId) throws Exception {
+//		String chapterUrl = "http://book.com/book/chapter_" + HtmlBookId + "_"
+//				+ chapterId + ".html";
+//		String chapterHtml = downloadUrlContent(chapterUrl, "utf-8");
+//		String chapterTitle = getStringLastBetween(chapterHtml,"<h1>", "</h1>");
+//		String chapterText = getStringLastBetween(chapterHtml, "","");
+//		chapterText = chapterText.replaceAll("</p><p>", "\n");
+//		chapterText = chapterText.replaceAll("<p>", "");
+//		chapterText = html2txt(chapterText.replaceAll("</p>", "")).trim();
+//		String chapterTextArr[] = chapterText.split("\n");
+//		addChapter(HtmlBookId, chapterId, chapterTitle, chapterTextArr);
+//
+//	}
 
 	/**
 	 * 根据章节内容添加章节

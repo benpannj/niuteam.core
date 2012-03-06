@@ -11,7 +11,7 @@ import org.w3c.dom.Node;
 
 public class NcxResource {
 	private Document docNcx;
-	private Element elmMeta, elmMetaUid;
+	private Element elmMeta, elmMetaUid, elmNav;
 	private boolean dirty = false;
 	
 	public void readXml(Document doc){
@@ -67,14 +67,16 @@ public class NcxResource {
 						elmMetaUid = elm;
 					}
 				}
-				String key = elm.getLocalName();
-				String value = XmlUtil.getTextContent(elm);
-				CONST.log.info("meta:  {}  - {}", key, value );
+//				String key = elm.getLocalName();
+//				String value = XmlUtil.getTextContent(elm);
+//				CONST.log.info("meta:  {}  - {}", key, value );
 			}
 			nd = nd.getNextSibling();
 		}
 		// docTitle
 		// navMap / navPoint/ navLabel / text
+		elmNav = (Element) elmNcx.getElementsByTagName("navMap").item(0);
+
 	}
 	public void setUid(String val){
 		if (elmMetaUid != null){
@@ -85,4 +87,47 @@ public class NcxResource {
 		
 	}
 	public Document getDoc(){return docNcx;}
+	public void compact() throws Exception{
+		this.dirty = true;
+		if (elmNav == null) return;
+//		elmNav.getParentNode().removeChild(elmNav);
+		
+		Node nd = elmNav.getFirstChild();
+		while (nd != null){
+			Node n = nd;
+			nd = nd.getNextSibling();
+			elmNav.removeChild(n);
+		}
+		addNav("Main", null);
+	// <navPoint id="navPoint-1" playOrder="1">
+//	      <navLabel>
+//	        <text>Main</text>
+//	      </navLabel>
+//		<content src="Text/c_00.htm"/>
+//	    </navPoint>
+//		String s = XmlUtil.node2String(docNcx);
+//		CONST.log.info(" cpt "  + s);
+	}
+	private int seq = 1;
+	private void addNav(String txt, String href){
+		Element e_p = docNcx.createElement("navPoint");
+		e_p.setAttribute("id", "id" + seq);
+		e_p.setAttribute("playOrder", "" + seq);
+		seq++;
+		elmNav.appendChild(e_p);
+		Element e_l = docNcx.createElement("navLabel");
+		Element e_t = docNcx.createElement("text");
+//		e_t.appendChild(docNcx.createTextNode(txt));
+		e_t.setTextContent(txt);
+		e_l.appendChild(e_t);
+		e_p.appendChild(e_l);
+		Element e_c = docNcx.createElement("content");
+		if (href == null){
+			href ="";
+//			href = "bk_1.htm";
+		}
+		e_c.setAttribute("src", href);
+		e_p.appendChild(e_c);
+		
+	}
 }

@@ -49,6 +49,7 @@ public interface CONST {
 	String HTM = "application/xhtml+xml";
 	String PNG = "image/png";
 	String JPG = "image/jpeg";
+	String GIF = "image/gif";
 	String CSS = "text/css";
 //	public static final MediaType XHTML = new MediaType("application/xhtml+xml", ".xhtml", new String[] {".htm", ".html", ".xhtml"});
 //	public static final MediaType EPUB = new MediaType("application/epub+zip", ".epub");

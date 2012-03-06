@@ -2,7 +2,9 @@ package niuteam.book.epub;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -24,19 +26,22 @@ public class OpfResource {
 	private String bkid_name = null;
 	private String ncx_href = null;
 	private String opf_href = null;
-
+	private ZipFile zf=null;
 	private boolean dirty = false;
 	// items
 	private Hashtable<String, Resource> items = null;
+	private List<String> zf_items = null;
 	// xml 
 	private Document docOpf;
 	private Element elmMeta;
 	private Element elmManifest;
-	private Element elmSpine;
+	private Element elmSpine, elmGuide;
+	
 	
 	public boolean isDirty(){return dirty;}
 	
-	public void readXml(String opf_href1, Document doc1, ZipFile zf){
+	public void readXml(String opf_href1, Document doc1, ZipFile zf_epub){
+		this.zf = zf_epub;
 		this.opf_href = opf_href1;
 		int pos = opf_href.lastIndexOf("/");
 		if (pos != -1){
@@ -44,7 +49,37 @@ public class OpfResource {
 		}
 		this.docOpf = doc1;
 		items = new Hashtable<String, Resource>();
+		if (zf != null) {
+			zf_items = new ArrayList<String>();
+			for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
+				ZipEntry ze = (ZipEntry)entries.nextElement();
+				String name = ze.getName();
+				if ( ze.isDirectory() ){
+					continue;
+				}
+				if (name.equals(CONST.FILE_ROOT)){
+					continue;
+				} else if (name.equals(CONST.FILE_INFO)){
+					continue;
+				} else if (name.equals(ncx_href)){
+					continue;
+				} else if (name.equals(opf_href)){
+					continue;
+				}else if (name.equals("iTunesArtwork") || name.equals("iTunesMetadata.plist")){
+					continue;
+				}else if (name.endsWith(".ttf")){
+					continue;
+				}
 
+				if (base_path!=null && base_path.length()>0){
+					pos = name.indexOf(base_path);
+					if (pos != -1){
+						name = name.substring(pos+base_path.length());
+					}
+				}
+				zf_items.add(name);
+			}
+		}
 		// package
 		Element elmPkg = this.docOpf.getDocumentElement();
 		String ns = elmPkg.getNamespaceURI();
@@ -91,6 +126,7 @@ public class OpfResource {
 			dirty = true;
 		}
 		// metadata
+		boolean meta_id= false;
 		elmMeta = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"metadata").item(0);
 		Node nd = elmMeta.getFirstChild();
 		while (nd != null){
@@ -100,6 +136,7 @@ public class OpfResource {
 				String value = XmlUtil.getTextContent(elm);
 				if (CONST.DCTags.identifier.equals(key)){
 					// key attr
+					meta_id = true;
 					String s = elm.getAttributeNS("", "id"); // CONST.NAMESPACE_OPF
 					if (!bkid_name.equals(s)){
 						CONST.log.info("meta:  id  - {}, {}", s, bkid_name );
@@ -108,6 +145,10 @@ public class OpfResource {
 					}
 					// bkid_val = value;
 //					CONST.log.info("meta:  id  - {}", attr );
+				} else if (CONST.DCTags.date.equals(key)){
+					if (value == null || value.length()<4){
+						elm.setTextContent("2011");
+					}
 				} else {
 					//CONST.log.info("meta:  {}  - {}", key, value );
 					// datas.put(key, value);
@@ -118,9 +159,14 @@ public class OpfResource {
 			}
 			nd = nd.getNextSibling();
 		}
+		if (!meta_id){
+			String bk_uid = "ID:";
+			setMetadata(CONST.DCTags.identifier, bk_uid);
+		}
 		// Manifest
 		List l = new ArrayList();
 		Element elmRemove = null;
+		int count = 0;
 		elmManifest = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"manifest").item(0);
 		for ( nd = elmManifest.getFirstChild(); nd!=null; nd = nd.getNextSibling()){
 			if (!(nd instanceof Element)) continue;
@@ -142,8 +188,15 @@ public class OpfResource {
 				ncx_href = item_href;
 				elm.setAttribute("media-type", CONST.MIME.NCX);
 				dirty = true;
+			} else {
+				
 			}
-			if (l.contains(item_href)){
+			if (item_href == null || item_href.length() == 0){
+				elm.removeAttribute("href");
+				elmRemove = elm;
+				dirty = true;
+				continue;
+			}else if (l.contains(item_href)){
 				CONST.log.info("remove item:  {}  - {}",id , item_href );
 //				elm.setAttribute("href", "");
 				elm.removeAttribute("href");
@@ -156,8 +209,26 @@ public class OpfResource {
 			// add zip res
 			ZipEntryResource res = new ZipEntryResource(id);
 			res.loadEntry(zf, item_href, type, base_path);
+			
+			// ADD for long file path
+			if (CONST.MIME.HTM.equals(type ) && item_href.length()>16){
+				int i = item_href.lastIndexOf("/");
+				StringBuffer buf = new StringBuffer();
+				if (i > 0){
+					buf.append(item_href.substring(0, i+1));
+				}
+				buf.append("bk_").append(count).append(".htm");
+				String n_href = buf.toString();// "bk_"+count +".htm"; // +item_href.substring(item_href.length() -13 );
+				res.setHref(n_href);
+				elm.setAttribute("href", n_href);
+			}
 			items.put(id, res);
+//			String f_path = base_path + item_href;
+			if (zf_items!= null && zf_items.contains(item_href) ){
+				zf_items.remove(item_href);
+			}
 			// check duplicate href
+			count++;
 		}
 		if ( elmRemove != null){
 			elmManifest.removeChild(elmRemove);
@@ -165,7 +236,7 @@ public class OpfResource {
 		l.clear();
 		elmSpine = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"spine").item(0);
 		String ncx_id = elmSpine.getAttribute("toc");
-		CONST.log.info("ncx_id:  {} ",  ncx_id );
+//		CONST.log.info("ncx_id:  {} ",  ncx_id );
 		nd = elmSpine.getFirstChild();
 		while (nd != null){
 			if (nd instanceof Element){
@@ -179,9 +250,18 @@ public class OpfResource {
 			}
 			nd = nd.getNextSibling();
 		}
-		Element elmGuide = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"guide").item(0);
+		elmGuide = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"guide").item(0);
 		if (elmGuide != null){
 			
+		}
+		if (zf_items!= null) {
+			for (String s : zf_items){
+				String id = s;
+				ZipEntryResource res = new ZipEntryResource(id);
+				res.loadEntry(zf, s, Resource.determineMediaType(s), base_path);
+				addItem(res);
+//				CONST.log.info("More : " + s);
+			}
 		}
 	}
 	public String getNcx(){return base_path + ncx_href;}
@@ -196,6 +276,7 @@ public class OpfResource {
 		boolean exist = items.containsKey(id);
 		if (exist){
 			// remove old.
+			CONST.log.warn("exist: " + id);
 		}
 		items.put(id, res);
 		// 
@@ -247,6 +328,7 @@ public class OpfResource {
 	}
 	public void writeItem(ZipOutputStream resultStream) throws Exception{
 		dirty = false;
+		List l = new ArrayList();
 		for (Node nd = elmManifest.getFirstChild(); nd != null; nd = nd.getNextSibling() ){
 			if (! (nd instanceof Element)) continue;
 			Element elm = (Element)nd;
@@ -269,7 +351,6 @@ public class OpfResource {
 
 			String item_path = base_path + item_href;
 
-			CONST.log.info(" write item  {}, {}", id, item_href);
 //				CONST.log.warn(" write item  {} {} {}", id, item_href, type);
 
 			InputStream ins = null;
@@ -288,12 +369,134 @@ public class OpfResource {
 				ins = IOUtil.loadTemplate(item_path);
 			}
 			if (ins != null) {
-				resultStream.putNextEntry(new ZipEntry( item_path));
+				ZipEntry ze = new ZipEntry( item_path);
+				try {
+				resultStream.putNextEntry(ze);
 				IOUtil.copy(ins, resultStream);
+				} catch (Exception e) {
+					CONST.log.info("BAD write item  {}, {}", id, item_href);
+					
+				}
 				ins.close();
 			} else {
 				CONST.log.info("empty ins!  item:  {}  - {}", type, item_href );
 			}
+		}
+	}
+	
+	public void compact() throws Exception{
+		dirty = true;
+		ZipEntryResource prev_res = null;
+		List l = new ArrayList();
+		for (Node nd = elmSpine.getFirstChild(); nd != null; nd = nd.getNextSibling() ){
+			if (! (nd instanceof Element)) continue;
+			Element elm = (Element)nd;
+			//<itemref idref="id250829" />
+			String key = elm.getLocalName();
+			String id = elm.getAttribute("idref");
+			if ("itemref".equals(key) && id != null && id.length()>1){
+			} else {
+				CONST.log.warn(" not itemref ? {}", key);
+				l.add(elm);
+				continue;
+			}
+//			if ("page".equals(id)){
+//				CONST.log.warn("  itemref {}", id);
+//			}
+			Resource res = items.get(id);
+			if (res == null){
+				l.add(elm);
+			} else if (res instanceof ZipEntryResource){
+				ZipEntryResource zres = (ZipEntryResource)res;
+				if (prev_res == null) {
+					prev_res = zres;
+				} else if (zres.getId().startsWith("_test_")){
+					prev_res = zres;
+				} else {
+					String bytes = zres.data();
+					int offset = 5;
+					if (prev_res.mergeSameTitle(bytes, offset)){
+						l.add(elm);
+						items.remove(id);
+					} else {
+						long size = zres.getSize();
+//						CONST.log.info(" size " + size);
+						// need merge?
+						if (size < 10000) {
+							prev_res.append(bytes);
+							l.add(elm);
+							items.remove(id);
+						} else if (size > 999000){
+							CONST.log.info("huge size " + size);
+							prev_res.append("");
+							prev_res = zres;
+						} else{
+							prev_res.append("");
+							prev_res = zres;
+						}
+					}
+					if (prev_res.getSize() > 120000) {
+						prev_res = null;
+					}
+				}
+			} else {
+			}
+		}
+		for (Iterator i = l.iterator(); i.hasNext();){
+			Element e = (Element)i.next();
+			elmSpine.removeChild(e);
+		}
+		l.clear();
+		for (Node nd = elmManifest.getFirstChild(); nd != null; nd = nd.getNextSibling() ){
+			if (! (nd instanceof Element)) continue;
+			Element elm = (Element)nd;
+			String key = elm.getLocalName();
+			String id = elm.getAttribute("id");
+			String type = elm.getAttribute("media-type");
+			if (CONST.MIME.HTM.equals(type) ){
+				if ( items.get(id) == null ){
+					l.add(elm);
+				}
+			}
+		}		
+		for (Iterator i = l.iterator(); i.hasNext();){
+			Element e = (Element)i.next();
+			elmManifest.removeChild(e);
+		}
+		if (elmGuide != null) {
+		Node nd = elmGuide.getFirstChild();
+		while (nd != null){
+			Node n = nd;
+			nd = nd.getNextSibling();
+			elmGuide.removeChild(n);
+		}
+		}
+		
+	}
+	public boolean has(String id){
+		return items.containsKey(id);
+	}
+	
+	public void checkExist(){
+		for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
+			ZipEntry ze = (ZipEntry)entries.nextElement();
+			String name = ze.getName();
+//			ze.isDirectory()
+			if (name.equals(CONST.FILE_ROOT)){
+				continue;
+			} else if (name.equals(CONST.FILE_INFO)){
+				continue;
+			} else if (name.equals(ncx_href)){
+				continue;
+			} else if (name.equals(opf_href)){
+				continue;
+			}
+	//		resultStream.putNextEntry(ze);
+	//		InputStream ins = zf.getInputStream(ze);
+	//		IOUtil.copy(ins, resultStream);
+	//		ins.close();
+//			ZipEntryResource res = new ZipEntryResource(item_href);
+//			res.loadEntry(zf, id, type);
 		}
 	}
 }

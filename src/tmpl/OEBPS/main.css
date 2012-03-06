@@ -9,9 +9,18 @@ h2 {
 	margin: 1em 6px 1em 0px;
 	text-align: left;
 }
+h3 {
+	color:indigo;
+	line-height:130%;
+	text-align: justify;
+	font-weight:bold;
+	font-size:large;
+	margin-top:50;
+}
 p {
 	text-align: justify;
 	text-indent: 2em;
 	line-height:130%;
 	margin-bottom:0.8em;
 }
+.yellow {background:yellow}

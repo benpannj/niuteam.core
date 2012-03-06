@@ -14,6 +14,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import niuteam.book.core.CONST;
+import niuteam.util.dtd.EPUBEntityResolver;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -39,6 +40,7 @@ public class XmlUtil {
 		try{
 //			documentBuilderFactory.setNamespaceAware(true);
 		    DocumentBuilder builder = documentBuilderFactory.newDocumentBuilder();
+		    builder.setEntityResolver(EPUBEntityResolver.instance );
 //		    factory.setAttribute(name, value);
 			return builder.parse(ins);
 		}

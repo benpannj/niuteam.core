@@ -72,6 +72,7 @@ public class IOUtil {
 	 */
 	public static int copy(InputStream in, OutputStream out)
 			throws IOException {
+		if (in == null) return 0;
 		byte[] buffer = new byte[IO_COPY_BUFFER_SIZE];
 		int readSize = -1;
 		int result = 0;

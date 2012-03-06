@@ -20,16 +20,20 @@ public abstract class Resource {
 	protected Resource(String id){
 		this.id = id;
 	}
-
+	public void setHref(String s) {
+		this.href = s;
+	}
 	public static String determineMediaType(String href){
-		CONST.log.info("file: --- {} ", href );
 		if (href.endsWith(".png")) {
 			return CONST.MIME.PNG;
+		} else if (href.endsWith(".gif")){
+			return CONST.MIME.GIF;
 		} else if (href.endsWith(".jpg")){
 			return CONST.MIME.JPG;
 		} else if (href.endsWith(".css")){
 			return CONST.MIME.CSS;
 		}
+		CONST.log.info("check type file: --- {} ", href );
 		return CONST.MIME.HTM;
 	}
 

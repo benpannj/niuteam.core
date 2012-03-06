@@ -5,6 +5,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.3.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-simple-1.6.3.jar"/>
+	<classpathentry kind="lib" path="lib/iText.jar"/>
+	<classpathentry kind="lib" path="lib/metadata-extractor.jar"/>
+	<classpathentry kind="lib" path="lib/jsoup-1.6.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/com.adobe.epubcheck"/>
 	<classpathentry kind="output" path="bin"/>

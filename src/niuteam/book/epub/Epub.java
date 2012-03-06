@@ -16,6 +16,7 @@ import java.util.zip.ZipOutputStream;
 
 import niuteam.book.core.CONST;
 import niuteam.book.core.FileResource;
+import niuteam.book.core.Resource;
 import niuteam.book.core.StringResource;
 import niuteam.book.core.ZipEntryResource;
 import niuteam.util.IOUtil;
@@ -23,6 +24,7 @@ import niuteam.util.XmlUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 public class Epub {
 	private Book book;
@@ -52,7 +54,17 @@ public class Epub {
 		String opf_href = rootFileElement.getAttribute("full-path");
 		// OPF file
 		ze = new ZipEntry(opf_href);
-		Document docOpf = XmlUtil.stream2doc(zf.getInputStream(ze));
+		InputStream ins = zf.getInputStream(ze);
+		Document docOpf= null;
+		docOpf = XmlUtil.stream2doc(ins);
+		if (docOpf == null) {
+			ins = zf.getInputStream(ze);
+			byte[] bs = IOUtil.toByteArray(ins);
+			String s = new String(bs);
+			s = s.replaceAll("&nbsp;", "");
+			s = s.replaceAll("xsi:type", "opf:event");
+			docOpf = XmlUtil.string2Document(s);
+		}
 		this.opf = new OpfResource();
 		opf.readXml(opf_href, docOpf, zf);
 		// NCX
@@ -134,7 +146,6 @@ public class Epub {
 	}	
 	public void create(String title, String auth, String lang){
 		this.opf = new OpfResource();
-		this.opf = new OpfResource();
 		Document docOpf = XmlUtil.stream2doc(IOUtil.loadTemplate(CONST.FILE_OPF));
 		opf.readXml(CONST.FILE_OPF, docOpf, null);
 		opf.setMetadata(CONST.DCTags.title, title);
@@ -195,5 +206,111 @@ public class Epub {
 		res.loadString(data);
 		opf.addItem(res);
 	}
-	
+	public void addEpub(File epub, String prefix) throws IOException {
+		ZipFile zf = new ZipFile(epub);
+		ZipEntry ze;
+		// mimetype
+//		ZipEntry ze = new ZipEntry(CONST.FILE_ROOT);
+		ze = zf.getEntry(CONST.FILE_ROOT);
+		if (ze == null) {
+			CONST.log.warn("not valid epub ! {} ", epub.getAbsolutePath());
+			return;
+		}
+		ze = new ZipEntry(CONST.FILE_INFO);
+		Document doc = XmlUtil.stream2doc(zf.getInputStream(ze));
+		Element rootFileElement = (Element) ((Element) doc.getDocumentElement().getElementsByTagName("rootfiles").item(0)).getElementsByTagName("rootfile").item(0);
+		String opf_href = rootFileElement.getAttribute("full-path");
+		// OPF file
+		ze = new ZipEntry(opf_href);
+		Document docOpf = XmlUtil.stream2doc(zf.getInputStream(ze));
+		int pos = opf_href.lastIndexOf("/");
+		String base_path = "";
+		if (pos != -1){
+			base_path = opf_href.substring(0, pos+1);
+		}
+
+		Element elmPkg = docOpf.getDocumentElement();
+		Element elmManifest = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"manifest").item(0);
+		for (Node nd = elmManifest.getFirstChild(); nd!=null; nd = nd.getNextSibling()){
+			if (!(nd instanceof Element)) continue;
+			Element elm = (Element)nd;
+			String key = elm.getLocalName();
+			if (!"item".equals(key)){
+				CONST.log.warn(" not item ? {}", key);
+			}
+			String type = elm.getAttribute("media-type");
+			String item_href = elm.getAttribute("href");
+			String id = elm.getAttribute("id");
+
+			if (item_href== null || item_href.length() <2){
+				continue;
+			}else if (item_href.endsWith("ncx")){
+				continue;
+			} else if (item_href.endsWith("opf")){
+				continue;
+			} else if (item_href.endsWith("css")){
+				continue;
+			} else if (item_href.endsWith("cover.jpg") || item_href.endsWith("coay.jpg")){
+				continue;
+			}
+			if (opf.has(id) ){
+				if (prefix != null){
+					id = prefix + id;
+				} else {
+					CONST.log.warn(" has item ? {}", item_href);
+					continue;
+				}
+			}
+			// <item id="ncx" href="toc.ncx" media-type="text/xml" />
+			ZipEntryResource res = new ZipEntryResource(id);
+			res.loadEntry(zf, item_href, type, base_path);
+			if (prefix != null){
+				res.setHref( prefix + item_href);
+			}
+			opf.addItem(res);
+		}
+//		for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
+//			ze = (ZipEntry)entries.nextElement();
+//			String name = ze.getName();
+//			if (name.equals(CONST.FILE_ROOT)){
+//				continue;
+//			} else if (name.equals(CONST.FILE_INFO)){
+//				continue;
+//			} else if (name.endsWith("ncx")){
+//				continue;
+//			} else if (name.endsWith("opf")){
+//				continue;
+//			} else if (name.endsWith("css")){
+//				continue;
+//			}
+//			if ( ze.isDirectory() ){
+//				continue;
+//			}
+////			resultStream.putNextEntry(ze);
+////			InputStream ins = zf.getInputStream(ze);
+////			IOUtil.copy(ins, resultStream);
+////			ins.close();
+//			String item_href = name;
+//			int pos = name.lastIndexOf('/');
+//			String id = pos == -1? name : name.substring(pos+1);
+//			String base_path ="";
+//			String type = Resource.determineMediaType(item_href);
+//			ZipEntryResource res = new ZipEntryResource(id);
+//			res.loadEntry(zf, item_href, type, base_path);
+//			opf.addItem(res);
+//		}
+	}	
+	public void compact() throws Exception{
+		opf.compact();
+		if (ncx == null){
+			this.ncx = new NcxResource();
+			Document docNcx = XmlUtil.stream2doc(IOUtil.loadTemplate(CONST.FILE_NCX));
+			ncx.readXml(docNcx);
+//			ncx.setUid(opf.getBkUid());
+//			ncx.setTitle(title);
+		} else {
+			ncx.compact();
+		}
+	}
+
 }
