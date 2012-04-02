@@ -1,6 +1,8 @@
 package niuteam.book.epub;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -12,6 +14,7 @@ import java.util.zip.ZipOutputStream;
 
 import niuteam.book.core.CONST;
 import niuteam.book.core.Resource;
+import niuteam.book.core.StringResource;
 import niuteam.book.core.ZipEntryResource;
 import niuteam.util.IOUtil;
 import niuteam.util.XmlUtil;
@@ -21,7 +24,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class OpfResource {
+public final class OpfResource {
 	private String base_path = "";
 	private String bkid_name = null;
 	private String ncx_href = null;
@@ -36,7 +39,7 @@ public class OpfResource {
 	private Element elmMeta;
 	private Element elmManifest;
 	private Element elmSpine, elmGuide;
-	
+	private int HUGE_SIZE = 199000; // 699000
 	
 	public boolean isDirty(){return dirty;}
 	
@@ -408,7 +411,26 @@ public class OpfResource {
 				l.add(elm);
 			} else if (res instanceof ZipEntryResource){
 				ZipEntryResource zres = (ZipEntryResource)res;
-				if (prev_res == null) {
+				long size = zres.getSize();
+				if (size > HUGE_SIZE){
+					String parent = zres.getHref();
+					int ii = parent.lastIndexOf('/');
+					if (ii != -1){
+						parent = parent.substring(ii+1);
+					}
+					CONST.log.info("huge size " + size + ", " + parent);
+					List<String> list = zres.split();
+					int i = 0;
+					for (String s : list){
+						i++;
+						
+						String href = parent+"_"+String.format("%03d", i)+".htm";
+						StringResource res_s = new StringResource(href);
+						res_s.loadString(s);
+						addItem(res_s);
+					}
+					prev_res = null;
+				} else if (prev_res == null) {
 					prev_res = zres;
 				} else if (zres.getId().startsWith("_test_")){
 					prev_res = zres;
@@ -419,17 +441,12 @@ public class OpfResource {
 						l.add(elm);
 						items.remove(id);
 					} else {
-						long size = zres.getSize();
 //						CONST.log.info(" size " + size);
 						// need merge?
 						if (size < 10000) {
 							prev_res.append(bytes);
 							l.add(elm);
 							items.remove(id);
-						} else if (size > 999000){
-							CONST.log.info("huge size " + size);
-							prev_res.append("");
-							prev_res = zres;
 						} else{
 							prev_res.append("");
 							prev_res = zres;
@@ -442,6 +459,9 @@ public class OpfResource {
 			} else {
 			}
 		}
+		if (prev_res != null){
+			prev_res.append("");
+		}
 		for (Iterator i = l.iterator(); i.hasNext();){
 			Element e = (Element)i.next();
 			elmSpine.removeChild(e);
@@ -450,13 +470,28 @@ public class OpfResource {
 		for (Node nd = elmManifest.getFirstChild(); nd != null; nd = nd.getNextSibling() ){
 			if (! (nd instanceof Element)) continue;
 			Element elm = (Element)nd;
-			String key = elm.getLocalName();
+			String item_href = elm.getAttribute("href");
 			String id = elm.getAttribute("id");
 			String type = elm.getAttribute("media-type");
 			if (CONST.MIME.HTM.equals(type) ){
 				if ( items.get(id) == null ){
 					l.add(elm);
 				}
+			}else if (CONST.MIME.JPG.equals(type)){
+				if (item_href.endsWith("coay.jpg") || item_href.endsWith("cover.jpg")){
+					// cover.jpg
+					l.add(elm);
+					items.remove(id);
+				}
+				// coay.jpg
+			}else if (CONST.MIME.CSS.equals(type)){
+				// replace css with main.css
+				Resource r = items.get(id);
+				if (r instanceof ZipEntryResource){
+					((ZipEntryResource) r).replaceCss();
+				}
+			}else {
+				
 			}
 		}		
 		for (Iterator i = l.iterator(); i.hasNext();){

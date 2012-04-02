@@ -41,7 +41,7 @@ import com.itextpdf.text.pdf.SimpleBookmark;
 
 public class EpubTest {
 
-	@Test
+//	@Test
 	public void testReadEpubFile() throws Exception {
 		File folder = new File("/tmp/etc");
 		File[] fs = folder.listFiles();
@@ -50,7 +50,7 @@ public class EpubTest {
 		for (File epubFile : fs) {
 			String name = epubFile.getName();
 			if (!name.endsWith(".epub")) continue;
-			File backup = new File(folder, name+".old");
+			File backup = new File(folder, name+".zip");
 			if (backup.exists()) continue;
 			CONST.log.info("testReadEpubFile B -------------------------- " + name);
 //			File epubFile = new File("/tmp/etc", "1.epub");
@@ -63,7 +63,7 @@ public class EpubTest {
 			epubFile.renameTo(backup);
 			File outFile =  new File(folder, name);
 			bk.writeEpub(outFile);
-			EpubUtil.checkEpub(outFile.getAbsolutePath());
+//			EpubUtil.checkEpub(outFile.getAbsolutePath());
 		}
 		CONST.log.info("testReadEpubFile E -----------------------------");
 	}
@@ -116,7 +116,7 @@ public class EpubTest {
 //		getTitleFromHhc("s");
 		File folder = new File("/tmp/etc/txt");
 		EpubUtil util = new EpubUtil();
-//		util.setEncoding("utf-8");
+		util.setEncoding("utf-8");
 		util.folder2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
@@ -204,7 +204,7 @@ public class EpubTest {
 		}
 	}
 	private int count = 0;
-//	@Test
+	@Test
 	public void testMergeEpub() throws Exception{
 		Epub bk = new Epub();
 //		
@@ -233,6 +233,7 @@ public class EpubTest {
 	}
 	private void mergeFolder(Epub bk, File folder) throws Exception {
 		File[] files = folder.listFiles();
+		if (files.length <2) return;
 		for (int i = 0; i < files.length; i++){
 			File f = files[i];
 			if (f.isDirectory() ) {
@@ -248,8 +249,8 @@ public class EpubTest {
 					if (count == 0) {
 						bk.readEpub(f);
 					} else {
-						bk.addString("_test_"+count+ ".htm", "<html><body>"+ name + "</body></html>");
-						bk.addEpub(f, "bk"+count);
+						bk.addString("_test_"+count+ ".htm", "<html><body><h1>"+ name + "</h1></body></html>");
+						bk.addEpub(f, "bk"+String.format("%02d", count) );
 					}
 					count++;
 				}

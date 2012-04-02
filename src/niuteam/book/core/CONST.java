@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 public interface CONST {
 	public static final Logger log = LoggerFactory.getLogger(CONST.class);
+	String tmp_folder = "/tmp/log";
 	String EPUBLIB_GENERATOR_NAME = "niut v201110";
 
 	String ENCODING = "UTF-8";

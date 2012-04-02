@@ -1,17 +1,22 @@
 h1 {
-	margin: 1em 4px 1em 0px;
-	text-align: center;
-font-size:x-large;
+	color:red;
+	line-height:120%;
+	text-align: justify;
+	border-bottom: 2px solid gray;
+	margin: 1em 6px 1em 4px;
+	font-weight:bold;
+font-size:xx-large;
 }
 h2 {
-	border-bottom: 1px solid gray;
-	color: gray;
+	line-height:110%;	border-bottom: 1px solid gray;
+	color: blue;
 	margin: 1em 6px 1em 0px;
 	text-align: left;
+font-size:x-large;
 }
 h3 {
 	color:indigo;
-	line-height:130%;
+	line-height:110%;
 	text-align: justify;
 	font-weight:bold;
 	font-size:large;
@@ -19,8 +24,18 @@ h3 {
 }
 p {
 	text-align: justify;
-	text-indent: 2em;
-	line-height:130%;
+	text-indent: 1em;
+	line-height:120%;
 	margin-bottom:0.8em;
 }
-.yellow {background:yellow}
+.yellow {background:yellow;}
+.box {
+	margin-left: 1em;
+	margin-right: 1em;
+	border-style: none solid none solid;
+	border-width: 0px 1px 0px 5px;
+	border-color: #CCCC00;
+	text-align: justify;
+	font-size:90%;
+	color: darkblue;
+}

@@ -1,7 +1,5 @@
 package niuteam.book.core;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,11 +8,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Whitelist;
 
 import niuteam.util.IOUtil;
 
@@ -62,7 +59,13 @@ public class ZipEntryResource extends Resource{
 	public void cal() throws Exception{
 		InputStream ins = getInputStream();
 //		if (ins == null) return;
-		f = new File("/tmp", this.href);
+//		File folder = new File(CONST.tmp_folder);
+//		if (folder.exists() && folder.isDirectory()){
+//			
+//		} else {
+//			folder.mkdirs();
+//		}
+		f = new File(CONST.tmp_folder, this.href);
 		File folder = f.getParentFile();
 		if (!folder.exists()){
 			folder.mkdirs();
@@ -72,13 +75,76 @@ public class ZipEntryResource extends Resource{
 		IOUtil.copy(ins, fos);
 		fos.flush();
 	}
+	public void replaceCss() throws Exception {
+		f = new File(CONST.tmp_folder, this.href);
+		File folder = f.getParentFile();
+		if (!folder.exists()){
+			folder.mkdirs();
+		}
+		InputStream ins = IOUtil.loadTemplate("OEBPS/main.css");
+		FileOutputStream fos = new FileOutputStream(f);
+		IOUtil.copy(ins, fos);
+		fos.flush();
+	}
+
 	public long getSize(){
 		if (f != null)
 			return f.length();
 		else {
 			ZipEntry ze = zf.getEntry(base_path + old_href); // new ZipEntry(base_path + old_href);
-			return (int) ze.getSize();
+			if (ze == null) {
+				CONST.log.error("BAD " + base_path + old_href);
+				return 0;
+			}else {
+				return (int) ze.getSize();
+			}
 		}
+	}
+	public List<String> split() throws Exception {
+		if (f == null) cal();
+		String html = data();
+		String temp;
+		html = XhtmlDoc.cleanHtml(html);
+		int start = 0, end = 0;
+		int offset = 120000;
+		boolean more = true;
+		int len = html.length();
+		Writer fwu = new OutputStreamWriter(new FileOutputStream(f), "utf-8");
+		end = html.indexOf("</p>", start+offset);
+		if (end != -1 && len-end >1000){
+			temp = html.substring(start, end+4);
+			fwu.write(temp);
+			fwu.write("</body></html>");
+			more = true;
+		} else {
+//			temp = html.substring(start);
+			fwu.write(html);
+			more = false;
+		}
+		fwu.flush();
+		fwu.close();
+		StringBuffer buf = new StringBuffer();
+		List<String> list = new ArrayList<String>();
+		while (more){
+			buf.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>");
+			buf.append("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title></title>")
+			.append("<link href=\"../Styles/main.css\" rel=\"stylesheet\" type=\"text/css\" />")
+			.append("</head><body>");
+			start = end+4;
+			end = html.indexOf("</p>", start+offset);
+			if (end != -1 && len-end >1000){
+				buf.append( html.substring(start, end+4)).append("</body></html>");
+				more = true;
+			} else {
+				buf.append(html.substring(start));
+				more = false;
+			}
+			list.add(buf.toString());
+			buf.setLength(0);
+		}
+		return list;
+		
+		
 	}
 	public void append(String d) throws Exception {
 		if (f == null) cal();
@@ -127,8 +193,13 @@ public class ZipEntryResource extends Resource{
 		String s = XhtmlDoc.getStringBetween(html, "<h2", "</h2>");
 		int pos = s.indexOf(">");
 		if (pos < 0){
-			return null;
+			s = XhtmlDoc.getStringBetween(html, "<title", "</title>");
+			pos = s.indexOf(">");
+			if (pos < 0){
+				return null;
+			}
 		}
+		
 		s = s.substring(pos+1);
 		s = XhtmlDoc.html2txt(s);
 		if (offset< 1 || offset >= s.length() ) {

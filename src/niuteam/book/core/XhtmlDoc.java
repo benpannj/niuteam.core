@@ -176,12 +176,18 @@ public class XhtmlDoc {
 		String line;
 		sb.append("<p>");
 		try {
+			int cur_len = 0;
 			while ((line = in.readLine()) != null) {
-				line.trim();
+				String line_t = line.trim();
+				int l = line_t.length();
+				if (l == 0) continue;
+				if (line_t.startsWith("----") && line_t.endsWith("----")) continue;
+				cur_len += l;
 				String end = "。";
 				sb.append(line);
-				if (line.endsWith(end)) {
+				if (line_t.endsWith(end)||line_t.endsWith("”") || cur_len >1024) {
 					sb.append("</p>").append("<p>");
+					cur_len = 0;
 				}
 			}
 			sb.append("</p>");
@@ -299,6 +305,7 @@ public class XhtmlDoc {
 		s = regex_rpl(s, "\\s>", ">");
 		StringBuffer buf = new StringBuffer(s);
 		str_rpl(buf, "<!--", "-->", "");
+		str_rpl(buf, "<svg ", "</svg>", "");
 		str_rpl(buf, "<script ", "</script>", "");
 //		str_rpl(buf, "<link", "</link>", "");
 		str_rpl(buf, "<style", "</style>", "");

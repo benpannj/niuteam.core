@@ -125,7 +125,7 @@ public class EpubUtil {
 				if (name.endsWith(".txt")){
 //					continue;
 					doc.analyzeTxt(name.substring(0, name.length()-4));
-					File fout = new File(tmp_folder, "p" + count+"."+i+".htm" );
+					File fout = new File(tmp_folder, "p" + count+"."+String.format("%03d", i)+".htm" );
 					doc.mergeTmpl(fout);
 					bk.addItem(fout);
 				} else {
@@ -161,7 +161,7 @@ public class EpubUtil {
 //		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
 		int last_len = 0;
 		for (int i = 1; i < page; i++){
-			File fout = new File(tmp_folder, "p_"+ i+".htm" );
+			File fout = new File(tmp_folder, "p_"+ String.format("%04d", i)+".htm" );
 			if (!fout.exists()){
 			String url = "http://"+site+"/"+title+"/";
 //			if(i == 1){

@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -230,6 +231,8 @@ public class Epub {
 		}
 
 		Element elmPkg = docOpf.getDocumentElement();
+		// use a map to store item for spine sort.
+		Hashtable<String, Resource> map = new Hashtable<String, Resource>();
 		Element elmManifest = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"manifest").item(0);
 		for (Node nd = elmManifest.getFirstChild(); nd!=null; nd = nd.getNextSibling()){
 			if (!(nd instanceof Element)) continue;
@@ -267,8 +270,45 @@ public class Epub {
 			if (prefix != null){
 				res.setHref( prefix + item_href);
 			}
-			opf.addItem(res);
+//			opf.addItem(res);
+			map.put(id, res);
 		}
+		Element elmSpine = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"spine").item(0);
+		String ncx_id = elmSpine.getAttribute("toc");
+//		CONST.log.info("ncx_id:  {} ",  ncx_id );
+		Node nd = elmSpine.getFirstChild();
+		while (nd != null){
+			if (nd instanceof Element){
+				Element elm = (Element)nd;
+				String key = elm.getLocalName();
+				if (!"itemref".equals(key)){
+					CONST.log.warn(" not itemref ? {} ", key);
+					continue;
+				}
+				String idref = elm.getAttribute("idref");
+				Resource r = map.get(idref);
+				if (r==null && prefix != null){
+					idref = prefix + idref;
+					r = map.get(idref);
+				}
+				// CONST.log.info("item:  {} ",  idref );
+				if (r!= null){
+					opf.addItem(r);
+					map.remove(idref);
+				}else {
+					CONST.log.warn(" bad item ", idref);
+				}
+			}
+			nd = nd.getNextSibling();
+		}
+		if (map.size() > 0){
+			for (String key : map.keySet()){
+				Resource r = map.get(key);
+				opf.addItem(r);
+			}
+			map.clear();
+		}
+
 //		for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
 //			ze = (ZipEntry)entries.nextElement();
 //			String name = ze.getName();
