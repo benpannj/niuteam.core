@@ -455,15 +455,10 @@ public final class OpfResource {
 					int i = 0;
 					for (String s : list){
 						i++;
-<<<<<<< HEAD
-						
-						String href = parent+"_"+String.format("%03d", i)+".htm";
-						StringResource res_s = new StringResource(href);
-=======
+					
 						String href = res.getId()+"_"+String.format("%03d", i)+".htm";
 						CONST.log.info("huge size " + href);
 						StringResource res_s = new StringResource(href, null);
->>>>>>> 949bd75... init
 						res_s.loadString(s);
 						addItem(res_s);
 					}

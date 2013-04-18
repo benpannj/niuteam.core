@@ -2,6 +2,8 @@ package test.epub;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -15,7 +17,9 @@ import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
 import niuteam.rss.RssSpinner;
 import niuteam.util.EpubUtil;
+import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
+import niuteam.util.WebSpinner;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -134,11 +138,7 @@ public class EpubTest extends TestCase {
 	}
 	long start, end;
 //	@Test
-<<<<<<< HEAD
-	public void testCreateFromTieku() throws Exception {
-=======
 	public void _testCreateFromTieku() throws Exception {
->>>>>>> 949bd75... init
 		String encoding = "utf-8";
 		entry(true);
 //		StringWriter out = new StringWriter();
@@ -180,25 +180,22 @@ public class EpubTest extends TestCase {
 			buf.insert(pos, '/');
 			String url_epub = buf.toString();
 //			CONST.log.info();
-			try {
-			WebSpinner.down(url_epub, f_epub, 1);
-			}catch(Exception e){
-				CONST.log.info("next down: " + e.getMessage());
-//				break;
-			}
+//			try {
+//			WebSpinner.down(url_epub, f_epub, 1);
+//			}catch(Exception e){
+//				CONST.log.info("next down: " + e.getMessage());
+////				break;
+//			}
 		}
 		EpubUtil util = new EpubUtil();
 //		util.setEncoding("utf-8");
 //		util.web2epub("www.onlylz.com/postcache","13lq",5);
 
-<<<<<<< HEAD
 //		util.web2epub("www.tieku.org","199375",300);
-=======
 		// 199375 
 		// 58387
 		// http://www.tieku001.com/226559/1.html
 		util.web2epub("www.tieku.org","199375",300);
->>>>>>> 949bd75... init
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -221,14 +218,8 @@ public class EpubTest extends TestCase {
 		}
 	}
 	private int count = 0;
-<<<<<<< HEAD
-	@Test
-	public void testMergeEpub() throws Exception{
-=======
-//	@Test
 	public void _testMergeEpub() throws Exception{
 		CONST.log.info(" merge begin: ");
->>>>>>> 949bd75... init
 		Epub bk = new Epub();
 //		
 		File folder = new File("/tmp/txt");
@@ -268,11 +259,7 @@ public class EpubTest extends TestCase {
 				String name = f.getName();
 				if (name.endsWith(".epub")){
 					
-<<<<<<< HEAD
-					if (f.length() > 400000) {
-=======
 					if (f.length() > 7000000) {
->>>>>>> 949bd75... init
 						CONST.log.info("skip size " +  f.length() );
 						continue;
 					}
@@ -381,9 +368,6 @@ public class EpubTest extends TestCase {
 //		e.dump(jpegFile);
 		CONST.log.info("testImgExif E -----------------------------");
 	}
-<<<<<<< HEAD
-	
-=======
 //	@Test
 	public void _testWebWpub()  throws Exception {
 		WebEpub e = new WebEpub();
@@ -445,9 +429,4 @@ public class EpubTest extends TestCase {
 		
 		CONST.log.info(""+ cnt);
 	}
-<<<<<<< HEAD
->>>>>>> 949bd75... init
-=======
-	
->>>>>>> 62d7774... iiiii
 }
