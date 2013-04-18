@@ -10,5 +10,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="lib" path="/com.cs.qdog.libs/log4j.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.json"/>
+	<classpathentry kind="var" path="JAR_DIR/sqlite.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 import niuteam.book.core.CONST;
 import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
-import niuteam.rss.WebPageSpinner;
+import niuteam.rss.RssSpinner;
 import niuteam.util.EpubUtil;
 import niuteam.util.PdfHelper;
 
@@ -29,10 +29,19 @@ import com.itextpdf.text.pdf.RandomAccessFileOrArray;
 import com.itextpdf.text.pdf.SimpleBookmark;
 
 public class EpubTest extends TestCase {
+	static{
+		File tmp_folder = new File(CONST.tmp_folder);
+		if (tmp_folder.exists()) {
+			
+		} else {
+			tmp_folder.mkdirs();
+		}
+		
+	}
 
 //	
 	public void _testReadEpubFile() throws Exception {
-		File folder = new File("r:/txt");
+		File folder = new File("/tmp/txt");
 		File[] fs = folder.listFiles();
 		EpubUtil util = new EpubUtil();
 //		util.fixEpub(folder, false);
@@ -74,7 +83,7 @@ public class EpubTest extends TestCase {
 //		opf.readXml(CONST.FILE_OPF, docOpf, null);
 //		CONST.log.info("  dirty?  " + opf.isDirty());
 //		String s = XmlUtil.node2String(opf.getDoc());
-		File folder = new File("r:/etc");
+		File folder = new File("/tmp/txt");
 //		File folder = new File("/home/ben/doc/etc");
 		// /mnt/DOC/Book/K85/epub
 		// /tmp
@@ -112,9 +121,9 @@ public class EpubTest extends TestCase {
 //		getTitleFromHhc("s");
 		File folder = new File("/tmp/txt");
 		EpubUtil util = new EpubUtil();
-		util.setEncoding("gbk");
-		util.folder2epub(folder);
-//		util.file2epub(folder);
+//		util.setEncoding("gbk");
+//		util.folder2epub(folder);
+		util.file2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -222,7 +231,7 @@ public class EpubTest extends TestCase {
 >>>>>>> 949bd75... init
 		Epub bk = new Epub();
 //		
-		File folder = new File("r:/txt");
+		File folder = new File("/tmp/txt");
 		count = 0;
 		mergeFolder(bk, folder);
 		
@@ -244,7 +253,7 @@ public class EpubTest extends TestCase {
 
 		bk.compact();
 
-		File outFile =  new File("r:/txt", "test_merge.epub");
+		File outFile =  new File(CONST.tmp_folder, "test_merge.epub");
 		bk.writeEpub(outFile);
 		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
@@ -381,11 +390,11 @@ public class EpubTest extends TestCase {
 		e.createFromWeiphone();
 	}
 	public void _testRssEpub()  throws Exception {
-//		RssSpinner e = new RssSpinner();
-//		e.rss2epub();
+		RssSpinner e = new RssSpinner();
+		e.rss2epub();
 
-		WebPageSpinner e = new WebPageSpinner();
-		e.webpage2epub();
+//		WebPageSpinner e = new WebPageSpinner();
+//		e.webpage2epub();
 	}
 	public void _testJsoup() throws Exception{
 		String cnt = "div#content";
@@ -436,5 +445,9 @@ public class EpubTest extends TestCase {
 		
 		CONST.log.info(""+ cnt);
 	}
+<<<<<<< HEAD
 >>>>>>> 949bd75... init
+=======
+	
+>>>>>>> 62d7774... iiiii
 }

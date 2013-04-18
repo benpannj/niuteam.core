@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 
 import niuteam.book.core.CONST;
@@ -28,16 +29,30 @@ import org.jsoup.select.Elements;
 
 public class RssSpinner {
 	private String user = "Ben Pan";
+	private Epub bk_all = new Epub();
+	private SimpleDateFormat fmt_yyyymmdd = null;
+	private SimpleDateFormat fmt_eeedmy = null;
+	private String yymmdd = null;
+	private int count = 0;
+
 	public void init(){
+		Date date_now = new Date();
+		fmt_yyyymmdd = new SimpleDateFormat("yyyyMMdd");//HHmmss
+	    fmt_eeedmy = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
 		
+//		long now = date_now.getTime(); // System.currentTimeMillis();
+		yymmdd = fmt_yyyymmdd.format(date_now);
+		bk_all.create(yymmdd, user,"zh");
 	}
 	// merge epub from web url
 	public void rss2epub() throws Exception {
-		File f = new File("etc/bookrss.conf");
+		File f = new File("etc/book.rss.json");
 		if (!f.exists()){
 			CONST.log.error("no conf: " + f.getAbsolutePath());
 			return;
 		}
+		// today
+		init();
 		boolean dirty = false;
 		StringWriter out = new StringWriter();
 		IOUtil.copy(new InputStreamReader(new FileInputStream(f)), out );
@@ -49,35 +64,52 @@ public class RssSpinner {
 			String id = j.optString("id");
 			if (id.length() < 1) continue;
 			try{
-			String title = j.optString("title");
-			String url = j.optString("url");
-			long old_last_dt = j.optLong("last_dt", 0);
-
-			CONST.log.info("load .. " + id + ", " + title + ", " + url);
-
-			long last_dt = readRss(url, id, title, old_last_dt, j);
-			if (last_dt > old_last_dt){
-				j.put("last_dt", Long.valueOf(last_dt));
-				dirty = true;
-			}
+				String title = j.optString("title");
+				String url = j.optString("url");
+				long old_last_dt = j.optLong("last_dt", 0);
+	
+				CONST.log.info("load .. " + id + ", " + title + ", " + url);
+//				if (!"blogjava".equals(id)){
+//					continue;
+//				}
+				bk_all.addString(id+".htm", title, title+ ", " + url);
+				// build rss book
+				long last_dt = readRss(url, id, title, old_last_dt, j);
+				// check update date
+				if (last_dt > old_last_dt){
+					j.put("last_dt", Long.valueOf(last_dt));
+					dirty = true;
+				}
 			}catch(Exception e){
 				CONST.log.error("", e);
-				}
+			}
 		}
 		if (dirty){
 			FileOutputStream output = new FileOutputStream(f);
 			output.write(json.toString(2).getBytes());
 			output.flush();
 			output.close();
+			File outFile =  new File(CONST.tmp_folder, "ALL."+yymmdd+".epub");
+			if (outFile.exists()){
+				File destFile =  new File(CONST.tmp_folder, "ALL."+yymmdd+System.currentTimeMillis()+".epub");
+				outFile.renameTo(destFile );
+			}
+			bk_all.writeEpub(outFile);
+			
 		}
 	}	
 	public long readRss(String url,String id, String title, long last_dt, JSONObject json_config) throws Exception{
-		long now = System.currentTimeMillis();
+		File tmp_folder = new File(CONST.tmp_folder+"/f", id);
+		if (tmp_folder.exists()) {
+		} else {
+			tmp_folder.mkdirs();
+		}
 		long newest_dt = last_dt;
-		File outFile =  new File(CONST.tmp_folder, id+now+".epub");
+		File outFile =  new File(CONST.tmp_folder, id+yymmdd+".epub");
 		Epub bk = new Epub();
 		if (outFile.exists()){
-			File destFile =  new File(CONST.tmp_folder, id+now+".epub");
+			File destFile =  new File(CONST.tmp_folder, id+yymmdd+count+".epub");
+			count++;
 			outFile.renameTo(destFile );
 			bk.readEpub(destFile);
 		} else {
@@ -94,10 +126,9 @@ public class RssSpinner {
 		String s = resp.body();
 		
 		JSONObject json = XML.toJSONObject(s);
-	    SimpleDateFormat f = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
 		String last_build_date = Json.getNodeVal(json, "/rss/channel/lastBuildDate");
 		if (last_build_date!=null){
-			long l = f.parse(last_build_date).getTime();
+			long l = fmt_eeedmy.parse(last_build_date).getTime();
 		    CONST.log.info("lastBuildDate - "  + l + ", "+last_dt+", " + newest_dt);
 		    if (l <= last_dt) return 0;
 
@@ -113,12 +144,15 @@ public class RssSpinner {
 			JSONObject j = ary.getJSONObject(i);
 			String link = j.optString("link");
 			String dt = j.optString("pubDate"); //// Thu, 1 Nov 2012 16:13:06
-		    long l = f.parse(dt).getTime();
+		    Date dt_pub = fmt_eeedmy.parse(dt);
+			long l = dt_pub.getTime();
 		    CONST.log.info(" - "  + l + ", "+last_dt+", " + newest_dt);
 		    if (l <= last_dt) continue;
 		    if (l > newest_dt){
 		    	newest_dt = l;
 		    }
+			String href = fmt_yyyymmdd.format(dt_pub)+"."+"p"+String.format("%03d", count)+".htm";
+			count++;
 
 		    // href
 		    int pos = link.lastIndexOf('/');
@@ -136,16 +170,24 @@ public class RssSpinner {
 			if (cnt !=null){
 				// use this
 			}else if (link.endsWith(filter)){
+				CONST.log.info("read more " + link);
 		    	cnt = readHtml(link, json_config);
 		    }else{
 		    	// need this?
 		    	CONST.log.info("skip " + link);
 		    	continue;
 		    }
-
+			// write file
+			File f_html = new File(tmp_folder, href);
+			FileOutputStream output = new FileOutputStream(f_html);
+			output.write(cnt.getBytes());
+			output.flush();
+			output.close();
+			
+			
 			Whitelist wl = new Whitelist();
-			wl.addTags("p","span");//
-			wl.addTags("img").addAttributes("img","src","alt");
+			wl.addTags("p","span","pre","code","ul","li");//
+			wl.addTags("img").addAttributes("img","src","alt","real_src");
 			cnt = Jsoup.clean(cnt, wl);
 
 			InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
@@ -153,11 +195,6 @@ public class RssSpinner {
 			docT.select("h2").first().html(ti);
 			docT.select("div").first().html(dt);
 			docT.select("p").first().html(cnt);
-			File tmp_folder = new File(CONST.tmp_folder+"/f", id);
-			if (tmp_folder.exists()) {
-			} else {
-				tmp_folder.mkdirs();
-			}
 
 			try{
 			Elements elm_imgs = docT.select("img");
@@ -165,16 +202,19 @@ public class RssSpinner {
 				for (Iterator<Element> itor = elm_imgs.iterator(); itor.hasNext(); ){
 					org.jsoup.nodes.Element elm_img = itor.next();
 					String img_src = elm_img.attr("src");
-					String file_name = "i"+img_src.substring(img_src.lastIndexOf('/')+1);
-					if ( file_name.endsWith(filter_img) ){
+					String file_name = "i"+String.format("%03d", count)+img_src.substring(img_src.lastIndexOf('/')+1);
+					count++;
+//					fmt_yyyymmdd.format(dt_pub)+"."+"i"+String.format("%03d", count)
+					if ("*.*".equals(filter_img) || file_name.endsWith(filter_img) ){
 						File f_img = new File(tmp_folder, file_name);
 						if (!f_img.exists()) {
 							WebSpinner.down(img_src, f_img);
 						}
 						elm_img.attr("src", file_name);
 						bk.addItem(f_img);
+						bk_all.addItem(f_img);
 					}else{
-						
+						CONST.log.info("skip img " + img_src);
 					}
 				}
 
@@ -183,8 +223,8 @@ public class RssSpinner {
 				
 			}
 			String content = docT.html();
-			String href = "p"+String.format("%03d", i)+"."+now+".htm";				
 			bk.addString(href, ti, content);
+			bk_all.addString(href, ti, content);
 		}	
 		if (newest_dt > last_dt){
 			bk.writeEpub(outFile);
@@ -202,20 +242,23 @@ public class RssSpinner {
 //				.data("wd", "Java")
 				  .timeout(15000)
 				  .get();
-//		String html = doc.html();
-//		File f = new File("/tmp/i21st.html");
-//		FileOutputStream output = new FileOutputStream(f);
-//		byte[] imgdata = request.bodyAsBytes();
-//		output.write(html.getBytes());
-//		output.flush();
-//		output.close();
 		String s;
+		try{
 		if (cnt.length() > 1){
 			s = doc.select(cnt).first().html();
 		}else{
 			s = doc.body().html();
 		}
-		
+		}catch (Exception e){
+			s = "";
+			String html = doc.html();
+			File f = new File(CONST.tmp_folder+"/f", "p"+String.format("%03d", count)+".htm");
+			FileOutputStream output = new FileOutputStream(f);
+//			byte[] imgdata = request.bodyAsBytes();
+			output.write(html.getBytes());
+			output.flush();
+			output.close();
+		}
 //		if (content != null)
 //			return content;
 		

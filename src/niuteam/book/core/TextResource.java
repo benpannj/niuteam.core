@@ -106,12 +106,12 @@ public class TextResource extends Resource{
 //				line_t = URLEncoder.encode(line_t, "utf-8"); //encoding
 				int l = line_t.length();
 				if (l == 0) continue;
-				if (line_t.startsWith("_________----") && line_t.endsWith("----")){
+				if (line_t.startsWith("----") && line_t.endsWith("----")){
 					rest.append("<div>");
 					rest.append(line_t);
 					StringBuilder line_bf = new StringBuilder();
 					// EDIT 3: skip 3, change to 1 at 20121221
-					for (int i = 0; i < 2; i++){
+					for (int i = 0; i < 4; i++){
 						// skip next 3 line for book
 						line = in.readLine();
 						if (line ==null){

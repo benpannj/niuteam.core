@@ -24,7 +24,7 @@ h3 {
 }
 p {
 	text-align: justify;
-	text-indent: 1em;
+	/* text-indent: 1em; */
 	line-height:120%;
 	margin-bottom:0.8em;
 }

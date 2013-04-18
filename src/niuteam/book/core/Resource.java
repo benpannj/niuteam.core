@@ -260,13 +260,22 @@ public abstract class Resource {
 		if (elms_l.size() > 0){
 			innerMergeSameTitle(elms_l);
 		}
+		// elms_l = doc_l.select("p");
+		// cleanElms(elms_l);
+
 		String s = XhtmlDoc.cleanHtml(doc_l.html());
 		
 //		Whitelist epub = new Whitelist();
 //		epub.addTags("p","pre","br","li","ul","h1","h2","h3","html","head","link","body");
 //        Cleaner cleaner = new Cleaner(epub);
+//        cleaner.
 //        Document clean = cleaner.clean(doc_l);
-//        String s = clean.html();
+//      String s = clean.html();
+//		Whitelist wl = new Whitelist();
+//		wl.addTags("p","span","pre","code","ul","li");//
+//		wl.addTags("img").addAttributes("img","src","alt","real_src");
+//		cnt = Jsoup.clean(cnt, wl);
+        
 
         Writer fwu = new OutputStreamWriter(getOutputStream(), encoding);
 		fwu.write(s);
@@ -274,4 +283,40 @@ public abstract class Resource {
 		fwu.close();
 		return true;
 	}	
+
+	private String cleanElms(Elements elms_l) {
+		String[] bad_ss = new String[]{"大中华文化知识宝库","一 中华·民族","二 地理·资源","二 地理·资原","三 政治·党派","四 王朝·职官","五 司法·军事","六 经济·货币"
+			,"七 商业·外贸","八 农林·牧渔","九 交通·邮政","十 科技·医药","十一 教育·人才","十二 图书·报刊","十三 思想·伦理","十四 宗教·神祇","十五 语言·文字"
+			,"十六 文学·戏曲","十七 乐舞·书画","十八 文物·工艺","十九 名胜·名城","二十 建筑·园林","二十一 岁时·节庆","二十二 风俗·礼仪","二十三 人口·姓名"
+			,"二十四 称谓·亲属","二十五 婚姻·丧葬","二十六 服饰·饮食","二十七 日用·收藏","二十八 体育·读书"	
+		};
+		String title_l = null;
+		StringBuilder buf = new StringBuilder();
+		Element elm = null;
+		for (Element elm_l : elms_l){
+			title_l = elm_l.text().trim();
+			for (String bad_str : bad_ss) {
+				int pos = title_l.indexOf(bad_str);
+				if (pos < 1) continue;
+				int len = bad_str.length() + pos;
+				int start = pos-1;
+				while (start >=0 && Character.isDigit(title_l.charAt(start))){
+					start--;
+				}
+				start++;
+				if (start != pos) {
+					String s = title_l.substring(start, len);
+					String s2 = title_l.substring(0, start)+title_l.substring(len);
+					elm_l.text(s2);
+					title_l = s2;
+					buf.append( s ).append(" ");
+				}
+			}
+		}
+		if (buf.length() > 2){
+			CONST.log.info(" .. "+ buf.toString());
+		}
+		return buf.toString();
+	}
+
 }
