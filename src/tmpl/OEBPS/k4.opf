@@ -3,19 +3,26 @@
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
     <dc:identifier id="BookId" opf:scheme="UUID"></dc:identifier>
     <dc:title>Todo</dc:title>
+    <dc:subject>work, testing</dc:subject>
     <dc:creator opf:role="aut">Ben Pan</dc:creator>
+    <dc:type>Memo</dc:type>
     <dc:date opf:event="publication">2011-08-30</dc:date>
-    <dc:language>zh</dc:language>
+    <dc:language>en</dc:language>
     <meta content="0.1" name="niut version" />
+    <meta content="cover_img" name="cover" />
   </metadata>
   <manifest>
+    <item href="cover.jpg" id="cover_img" media-type="image/jpeg" />
     <item href="toc.ncx" id="ncx" media-type="application/x-dtbncx+xml" />
+    <item href="Text/toc.htm" id="toc.htm" media-type="application/xhtml+xml" />
     <item href="main.css" id="main-css" media-type="text/css"/>
     <item href="Text/c_00.htm" id="c_00.htm" media-type="application/xhtml+xml"/>
   </manifest>
   <spine toc="ncx">
      <itemref idref="c_00.htm"/>
+     <itemref idref="toc.htm" />
   </spine>
    <guide>
+    <reference href="Text/toc.htm" title="Table Of Contents" type="toc" />
   </guide>
 </package>

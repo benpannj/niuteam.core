@@ -2,7 +2,10 @@ package niuteam.book.core;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.ZipEntry;
 
 public class FileResource extends Resource{
 	private File f;
@@ -16,6 +19,11 @@ public class FileResource extends Resource{
 		href = "Text/" + f_name;
 		
 	}
+	public OutputStream getOutputStream() throws Exception {
+		FileOutputStream fos = new FileOutputStream(f);
+		return fos;
+	}
+	
 	public InputStream getInputStream() throws Exception {
 		CONST.log.info("get file ins!  item: " + this.getHref() );
 		InputStream ins = null;
@@ -26,4 +34,14 @@ public class FileResource extends Resource{
 		}
 		return ins;
 	}
+	public long getSize(){
+		if (!CONST.MIME.HTM.equals(getMediaType()) ){
+			return 0;
+		}
+		if (f != null)
+			return f.length();
+		else {
+			return 0;
+		}
+	}	
 }

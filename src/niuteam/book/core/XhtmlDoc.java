@@ -14,6 +14,7 @@ import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -70,10 +71,6 @@ public class XhtmlDoc {
 		fwu.write(html);
 		fwu.flush();
 		fwu.close();
-	}
-	public void analyzeTxt(String t){
-		title = t;
-		content = txt2htm(html);
 	}
 	public void analyzeTitle(String open, String close, String df){
 		title = getStringBetween(html, open, close);
@@ -169,36 +166,7 @@ public class XhtmlDoc {
 		}
 		return "";
 	}
-	public static String txt2htm(String s) {
-		if (s == null) return null;
-		StringBuilder sb = new StringBuilder(4096);
-		BufferedReader in = new BufferedReader(new StringReader(s) );
-		String line;
-		sb.append("<p>");
-		try {
-			int cur_len = 0;
-			while ((line = in.readLine()) != null) {
-				String line_t = line.trim();
-				int l = line_t.length();
-				if (l == 0) continue;
-				if (line_t.startsWith("----") && line_t.endsWith("----")) continue;
-				cur_len += l;
-				String end = "。";
-				sb.append(line);
-				if (line_t.endsWith(end)||line_t.endsWith("”") || cur_len >1024) {
-					sb.append("</p>").append("<p>");
-					cur_len = 0;
-				}
-			}
-			sb.append("</p>");
-			in.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		System.out.println(urlStr);
-		return sb.toString().trim();
-	}
+
 //	public static void cleanHtml(StringBuffer buf, String[] keep, String rpl){
 //		if (buf == null || keep == null) return;
 //		int pos = 0;
@@ -465,5 +433,8 @@ public class XhtmlDoc {
 //			body1.add(paragraph1);
 //		}
 
-	}	
+	}
+	
+
+
 }

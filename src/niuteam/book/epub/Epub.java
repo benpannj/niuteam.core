@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -29,7 +30,7 @@ import org.w3c.dom.Node;
 
 public class Epub {
 	private Book book;
-//	private boolean dirty = true;
+//	private ZipFile zf = null;
 	// 
 	private Document docContainer=null;
 	private OpfResource opf;
@@ -37,7 +38,7 @@ public class Epub {
 	
 	public boolean isDirty(){return opf.isDirty();}
 	
-	public void readEpub(File epub) throws IOException {
+	public ZipFile readEpub(File epub) throws IOException {
 //		private ZipFile zf = null;;
 		ZipFile zf = new ZipFile(epub);
 		ZipEntry ze;
@@ -46,7 +47,7 @@ public class Epub {
 		ze = zf.getEntry(CONST.FILE_ROOT);
 		if (ze == null) {
 			CONST.log.warn("not valid epub ! {} ", epub.getAbsolutePath());
-			return;
+			return zf;
 		}
 		//
 		ze = new ZipEntry(CONST.FILE_INFO);
@@ -102,6 +103,7 @@ public class Epub {
 //			res.loadEntry(zf, id, type);
 //
 //		}
+		return zf;
 	}
 	public void writeEpub(File outFile) throws Exception {
 		OutputStream out = new FileOutputStream(outFile);
@@ -193,6 +195,26 @@ public class Epub {
 		return crc.getValue();
 	}
 
+	public void addResource(Resource res) throws Exception{
+		long size = res.getSize();
+		if (size > CONST.HUGE_SIZE){
+			List<String> list = res.split();
+			int i = 0;
+			for (String s : list){
+				i++;
+				
+				String href = res.getId()+"_"+String.format("%03d", i)+".htm";
+				CONST.log.info("huge size " + href);
+				StringResource res_s = new StringResource(href, null);
+				res_s.loadString(s);
+				addResource(res_s);
+			}
+			// spilit
+		}
+		
+		opf.addItem(res);
+		ncx.addItem(res);
+	}
 
 	// add local file as item
 	public void addItem(File f) throws Exception{
@@ -201,11 +223,13 @@ public class Epub {
 		FileResource res = new FileResource(name);
 		res.loadFile(f);
 		opf.addItem(res);
+		ncx.addItem(res);
 	}
-	public void addString(String href, String data) throws Exception{
-		StringResource res = new StringResource(href);
+	public void addString(String href, String title, String data) throws Exception{
+		StringResource res = new StringResource(href, title);
 		res.loadString(data);
 		opf.addItem(res);
+		ncx.addItem(res);
 	}
 	public void addEpub(File epub, String prefix) throws IOException {
 		ZipFile zf = new ZipFile(epub);
@@ -234,6 +258,9 @@ public class Epub {
 		// use a map to store item for spine sort.
 		Hashtable<String, Resource> map = new Hashtable<String, Resource>();
 		Element elmManifest = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"manifest").item(0);
+		if (elmManifest == null){
+			elmManifest = (Element) elmPkg.getElementsByTagName("manifest").item(0);	
+		}
 		for (Node nd = elmManifest.getFirstChild(); nd!=null; nd = nd.getNextSibling()){
 			if (!(nd instanceof Element)) continue;
 			Element elm = (Element)nd;
@@ -255,6 +282,8 @@ public class Epub {
 				continue;
 			} else if (item_href.endsWith("cover.jpg") || item_href.endsWith("coay.jpg")){
 				continue;
+			} else if (item_href.endsWith("shucang.xml")){
+				continue;
 			}
 			if (opf.has(id) ){
 				if (prefix != null){
@@ -274,6 +303,9 @@ public class Epub {
 			map.put(id, res);
 		}
 		Element elmSpine = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"spine").item(0);
+		if (elmSpine == null){
+			elmSpine = (Element) elmPkg.getElementsByTagName("spine").item(0);	
+		}
 		String ncx_id = elmSpine.getAttribute("toc");
 //		CONST.log.info("ncx_id:  {} ",  ncx_id );
 		Node nd = elmSpine.getFirstChild();
@@ -341,6 +373,7 @@ public class Epub {
 //		}
 	}	
 	public void compact() throws Exception{
+		CONST.log.info(" compact begin: ");
 		opf.compact();
 		if (ncx == null){
 			this.ncx = new NcxResource();

@@ -55,7 +55,7 @@ public class WebSpinner {
 		fwu.close();
 		return next;
 	}
-	public static void down(String site, String tid, int page) throws Exception{
+	public static void down(String site, String tid, int patge) throws Exception{
 		File f = new File("/tmp/"+tid+".html");
 		Document doc;
 		if (!f.exists()){
@@ -95,14 +95,14 @@ public class WebSpinner {
 //		Document doc = Jsoup.parse(safe);
 		
 		Elements links = doc.select("a[href]");
-		print("\nLinks: (%d)", links.size());
+		IOUtil.print("\nLinks: (%d)", links.size());
 		for (Element link : links) {
             String href = link.text();
             if (href!= null && href.endsWith(".epub")){
     			try {
             	downEpub(link, "gbk");
     			}catch(Exception e){
-        			print(" * a: <%s>  (%s)", link.attr("abs:href"), trim(link.text(), 35));
+    				IOUtil.print(" * a: <%s>  (%s)", link.attr("abs:href"), IOUtil.trim(link.text(), 35));
     				
     			}
 //            	break;
@@ -110,7 +110,7 @@ public class WebSpinner {
 		}
 		Elements media = doc.select("[src]");
 
-        print("\nMedia: (%d)", media.size());
+		IOUtil.print("\nMedia: (%d)", media.size());
         for (Element src : media) {
         	String encoding = null;
             if (src.tagName().equals("img")) {
@@ -122,7 +122,7 @@ public class WebSpinner {
             	encoding = "gbk";
                 String href = src.attr("abs:src");
                 if (href!= null && href.endsWith(".epub")){
-                	print(" * %s: <%s>", src.tagName(), href);
+                	IOUtil.print(" * %s: <%s>", src.tagName(), href);
                 }
             }
         }
@@ -171,16 +171,16 @@ public class WebSpinner {
 				  .get();
 		String ajax = doc.text();
 		Document docT = Jsoup.parseBodyFragment(ajax);
-		print("--  %s", ajax);
+		IOUtil.print("--  %s", ajax);
 		Elements links = docT.select("a[href]");
-		print("\nLinks: (%d)", links.size());
+		IOUtil.print("\nLinks: (%d)", links.size());
 		for (Element link2 : links) {
             String href = link2.attr("abs:href");
             String href1 = link2.attr("href");
-			print(" *2 a: <%s>  (%s)", href1,  trim(link2.text(), 35));
+            IOUtil.print(" *2 a: <%s>  (%s)", href1,  IOUtil.trim(link2.text(), 35));
             if (href1.contains("zjmcc")){
             	String epub_url = "http://bbs.weiphone.com/"+href1;
-            	print(" save %s from %s", f_name, epub_url);
+            	IOUtil.print(" save %s from %s", f_name, epub_url);
 				FileOutputStream output = new FileOutputStream(file);
     			byte[] imgdata = epub_url.getBytes();
     			output.write(imgdata);
@@ -217,7 +217,7 @@ public class WebSpinner {
 //		output.flush();
 //		output.close();
 	}	
-	public static void down(String url, File f, int page) throws Exception{
+	public static void down(String url, File f) throws Exception{
 		CONST.log.info("begin down: " + url);
 		Response request = Jsoup.connect(url).referrer(url)
 		.userAgent("Mozilla/5.0 (Windows NT 5.1; rv:2.0b6) Gecko/20100101 Firefox/4.0b6")
@@ -239,15 +239,5 @@ public class WebSpinner {
 		output.flush();
 		output.close();
 	}
-	private static void print(String msg, Object... args) {
-        System.out.println(String.format(msg, args));
-    }
-
-    private static String trim(String s, int width) {
-        if (s.length() > width)
-            return s.substring(0, width-1) + ".";
-        else
-            return s;
-    }
 	
 }

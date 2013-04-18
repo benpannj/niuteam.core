@@ -2,48 +2,37 @@ package test.epub;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.zip.ZipFile;
 
+import junit.framework.TestCase;
 import niuteam.book.core.CONST;
-import niuteam.book.core.XhtmlDoc;
 import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
+import niuteam.rss.WebPageSpinner;
 import niuteam.util.EpubUtil;
-import niuteam.util.IOUtil;
-import niuteam.util.WebSpinner;
+import niuteam.util.PdfHelper;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
-import org.junit.Test;
 
-import com.drew.imaging.jpeg.JpegMetadataReader;
-import com.drew.metadata.Directory;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifIFD0Directory;
 import com.itextpdf.text.pdf.PRTokeniser;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.RandomAccessFileOrArray;
 import com.itextpdf.text.pdf.SimpleBookmark;
 
-public class EpubTest {
+public class EpubTest extends TestCase {
 
-//	@Test
-	public void testReadEpubFile() throws Exception {
-		File folder = new File("/tmp/etc");
+//	
+	public void _testReadEpubFile() throws Exception {
+		File folder = new File("r:/txt");
 		File[] fs = folder.listFiles();
 		EpubUtil util = new EpubUtil();
 //		util.fixEpub(folder, false);
@@ -57,18 +46,25 @@ public class EpubTest {
 			// checkEpub(epubFile.getAbsolutePath());
 	//		FileInputStream in = new FileInputStream(epubFile);
 			Epub bk = new Epub();
-			bk.readEpub(epubFile);
+			ZipFile zf = bk.readEpub(epubFile);
 			bk.compact();
 	//		bk.addString("test.htm", "<html><body>Hello, world!</body></html>");
-			epubFile.renameTo(backup);
-			File outFile =  new File(folder, name);
+			File outFile =  new File(folder, name+".epub");
 			bk.writeEpub(outFile);
 //			EpubUtil.checkEpub(outFile.getAbsolutePath());
+			zf.close();
+			CONST.log.info("backup to " + backup.getAbsolutePath());
+			boolean ok = epubFile.renameTo(backup);
+			
+			if (!ok){
+				CONST.log.info("BAD backup to " + epubFile.getAbsolutePath() + ", " + epubFile.exists());
+			}
+			ok = outFile.renameTo(epubFile);
 		}
 		CONST.log.info("testReadEpubFile E -----------------------------");
 	}
-//	@Test
-	public void testFixEpubFile() throws Exception {
+//	
+	public void _testFixEpubFile() throws Exception {
 		CONST.log.info("testFixEpubFile B -----------------------------");
 		
 //		OpfResource opf = new OpfResource();
@@ -78,7 +74,7 @@ public class EpubTest {
 //		opf.readXml(CONST.FILE_OPF, docOpf, null);
 //		CONST.log.info("  dirty?  " + opf.isDirty());
 //		String s = XmlUtil.node2String(opf.getDoc());
-		File folder = new File("/tmp/etc");
+		File folder = new File("r:/etc");
 //		File folder = new File("/home/ben/doc/etc");
 		// /mnt/DOC/Book/K85/epub
 		// /tmp
@@ -89,24 +85,24 @@ public class EpubTest {
 	}
 
 	
-//	@Test
-	public void testCreateEpubFile() throws Exception {
+//	
+	public void _testCreateEpubFile() throws Exception {
 		CONST.log.info("testCreateEpubFile B -----------------------------");
 		Epub bk = new Epub();
-		bk.create("Ben", "Ben 1","en");
-		bk.setMetadata(CONST.DCTags.subject, "Ben Pan subject ");
-		bk.setMetadata(CONST.DCTags.title, "test title ");
-		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test ");
-		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
+		bk.create("Ben", "Ben 1","zh");
+//		bk.setMetadata(CONST.DCTags.subject, "Ben Pan subject ");
+//		bk.setMetadata(CONST.DCTags.title, "test title ");
+//		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test ");
+//		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
 		// add chapter 1 
-		File f = new File("/tmp", "c_01.htm");
-		bk.addItem(f);
+//		File f = new File("/tmp", "git.htm");
+//		bk.addItem(f);
 		// 
-		 bk.addString("test.htm", "<html><body>Hello, world!</body></html>");
+		 bk.addString("test.htm", "test title", "<html><body>Hello, world!</body></html>");
 		
 		File outFile =  new File("/tmp", "test_create.epub");
 		bk.writeEpub(outFile);
-		EpubUtil.checkEpub(outFile.getAbsolutePath());
+//		EpubUtil.checkEpub(outFile.getAbsolutePath());
 		CONST.log.info("testCreateEpubFile E -----------------------------");
 	}
 
@@ -114,10 +110,11 @@ public class EpubTest {
 	public void testCreateFromFolder() throws Exception {
 		CONST.log.info("testCreateFromFolder B -----------------------------");
 //		getTitleFromHhc("s");
-		File folder = new File("/tmp/etc/txt");
+		File folder = new File("/tmp/txt");
 		EpubUtil util = new EpubUtil();
-		util.setEncoding("utf-8");
+		util.setEncoding("gbk");
 		util.folder2epub(folder);
+//		util.file2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -128,7 +125,11 @@ public class EpubTest {
 	}
 	long start, end;
 //	@Test
+<<<<<<< HEAD
 	public void testCreateFromTieku() throws Exception {
+=======
+	public void _testCreateFromTieku() throws Exception {
+>>>>>>> 949bd75... init
 		String encoding = "utf-8";
 		entry(true);
 //		StringWriter out = new StringWriter();
@@ -181,7 +182,14 @@ public class EpubTest {
 //		util.setEncoding("utf-8");
 //		util.web2epub("www.onlylz.com/postcache","13lq",5);
 
+<<<<<<< HEAD
 //		util.web2epub("www.tieku.org","199375",300);
+=======
+		// 199375 
+		// 58387
+		// http://www.tieku001.com/226559/1.html
+		util.web2epub("www.tieku.org","199375",300);
+>>>>>>> 949bd75... init
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -204,11 +212,17 @@ public class EpubTest {
 		}
 	}
 	private int count = 0;
+<<<<<<< HEAD
 	@Test
 	public void testMergeEpub() throws Exception{
+=======
+//	@Test
+	public void _testMergeEpub() throws Exception{
+		CONST.log.info(" merge begin: ");
+>>>>>>> 949bd75... init
 		Epub bk = new Epub();
 //		
-		File folder = new File("/tmp/etc");
+		File folder = new File("r:/txt");
 		count = 0;
 		mergeFolder(bk, folder);
 		
@@ -228,8 +242,11 @@ public class EpubTest {
 //		bk.addString("test6.htm", "<html><body>6</body></html>");
 //		bk.addEpub(new File("/tmp", "6.epub") );
 
-		File outFile =  new File("/tmp", "test_merge.epub");
+		bk.compact();
+
+		File outFile =  new File("r:/txt", "test_merge.epub");
 		bk.writeEpub(outFile);
+		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
 	private void mergeFolder(Epub bk, File folder) throws Exception {
 		File[] files = folder.listFiles();
@@ -242,14 +259,18 @@ public class EpubTest {
 				String name = f.getName();
 				if (name.endsWith(".epub")){
 					
+<<<<<<< HEAD
 					if (f.length() > 400000) {
+=======
+					if (f.length() > 7000000) {
+>>>>>>> 949bd75... init
 						CONST.log.info("skip size " +  f.length() );
 						continue;
 					}
 					if (count == 0) {
 						bk.readEpub(f);
 					} else {
-						bk.addString("_test_"+count+ ".htm", "<html><body><h1>"+ name + "</h1></body></html>");
+						bk.addString("_test_"+count+ ".htm",name, "<html><body><h1>"+ name + "</h1></body></html>");
 						bk.addEpub(f, "bk"+String.format("%02d", count) );
 					}
 					count++;
@@ -260,13 +281,13 @@ public class EpubTest {
 
 
 	// @Test
-	public void testPdf() throws Exception{
+	public void _testPdf() throws Exception{
 		File folder = new File("/mnt/DOC/Book2/5 哲学");
 //		fixPdf(folder);
-		
+		PdfHelper.pdf2txt("/tmp/r79-C.pdf");
 //		gulong_list.htm
 		
-		File f1 = new File("/tmp", "i62.pdf" );
+		File f1 = new File("/tmp", "r79-C.pdf" );
 //		PdfHelper.splitPDFFile(f1.getAbsolutePath(), 40);
 //		PdfHelper.removeBlankPdfPages(f1.getAbsolutePath(), "/tmp/bak.pdf");
 //		PdfReader reader = new PdfReader(new FileInputStream(f1));
@@ -335,17 +356,85 @@ public class EpubTest {
         CONST.log.info("s  " + strTarget);
 	}
 //	@Test
-	public void testImgExif() throws Exception {
+	public void _testImgExif() throws Exception {
 		CONST.log.info("testImgExif B -----------------------------");
-		Exif e = new Exif("/tmp/pic");
-		File f = new File("/tmp/pic");
+		Exif e = new Exif("/mnt/DOC/Private/PanQing/2011");
+		File f = new File("/mnt/DOC/Private/new");
+		if (f.exists() && f.isDirectory()){
 //		e.dump(f);
-		e.organize(f);
+			e.organize(f);
+		} else {
+			CONST.log.info("" + f.exists() + ",  " + f.isDirectory() + ", " + f.getAbsolutePath());
+		}
 //		File base_folder = new File("/mnt/DOC/Private/PanQing/2011");
 //		File jpegFile = new File(base_folder, "/T0_1/IMG_2583.JPG");
 //		e.organize(new File("/mnt/DOC/Private/PanQing/2011/201108"));
 //		e.dump(jpegFile);
 		CONST.log.info("testImgExif E -----------------------------");
 	}
+<<<<<<< HEAD
 	
+=======
+//	@Test
+	public void _testWebWpub()  throws Exception {
+		WebEpub e = new WebEpub();
+		e.createFromWeiphone();
+	}
+	public void _testRssEpub()  throws Exception {
+//		RssSpinner e = new RssSpinner();
+//		e.rss2epub();
+
+		WebPageSpinner e = new WebPageSpinner();
+		e.webpage2epub();
+	}
+	public void _testJsoup() throws Exception{
+		String cnt = "div#content";
+		//<div id="content">  "div#content"
+		//<div class="content">  "div.content"
+		// http://www.accuitysolutions.com/en/Footer-Pages/Calendar-of-Holidays/
+		FileInputStream ins = new FileInputStream("r:/log/f/7612712.html");
+		Document doc = Jsoup.parse(ins, "gbk","");
+		String s11 = doc.select(cnt).first().html();
+		if (s11 != null){
+			CONST.log.debug(s11);
+		}
+		Elements items2 = doc.select("table");
+		CONST.log.info( "found " + items2.size() );
+		Elements items = doc.select("ul");
+		int size = items.size();
+		for (int i = 0; i< size; i++){
+			Element elm = items.get(i);
+//		for (Element elm = items.first(); elm != null;elm = elm.nextElementSibling()){
+			String v = elm.parent().parent().parent().select("td").first().text();
+//			Elements lis = elm.children();
+//			for (Element li = lis.first(); li!=null; li = li.nextElementSibling()){
+//				String t = li.text();
+//				int pos = t.length();
+//				while (pos > 0){
+//					pos--;
+//					int c = t.charAt(pos);
+//					if (c > 256){
+//						String cnty = t.substring(0, pos);
+//						String day = t.substring(pos+1);
+//						CONST.log.info(" " + cnty + ", " + day+": " + v);
+//						break;
+//					}
+//				}
+//				if (pos == 0){
+//					CONST.log.info(" " + v + ", " + t);
+//				}
+//			}
+			CONST.log.info("v " + v);
+		}
+//		String s = doc.select(cnt).first().html();
+		String s = doc.body().html();
+
+		Whitelist wl = new Whitelist();
+		wl.addTags("p","span");//
+		wl.addTags("img").addAttributes("img","src","alt");
+		cnt = Jsoup.clean(s, wl);
+		
+		CONST.log.info(""+ cnt);
+	}
+>>>>>>> 949bd75... init
 }

@@ -1,0 +1,25 @@
+{user:"Ben Pan",mail:{from:"ben.pan.nj@gmail.com",to:"benpannj@duokan.com",host:"mail.google.com"},
+web:[
+  {id:"",title:"gitmagic"
+  ,url:["http://www-cs-students.stanford.edu/~blynn/gitmagic/intl/zh_cn/index.html"
+      ,"http://www-cs-students.stanford.edu/~blynn/gitmagic/intl/zh_cn/ch01.html"
+      ,"http://www-cs-students.stanford.edu/~blynn/gitmagic/intl/zh_cn/ch02.html"
+      ,"http://www-cs-students.stanford.edu/~blynn/gitmagic/intl/zh_cn/ch[03-09].html"]
+  ,last_dt:0,filter:".html",ext:"false",cnt:"div.content"}
+ ,{id:"",title:"bxwx"
+  ,url:"http://www.bxwx.org/b/48/48046/"
+  ,last_dt:1352325231000,filter:".html",ext:"true",cnt:"div#content",skip:"MARQUEE",encoding:"gbk"}
+ ,{id:"",title:"booksina"
+   ,url:"http://vip.book.sina.com.cn/book/index_1667.html"
+   ,last_dt:1351388700000,filter:".html",ext:"true",cnt:"div#contTxt"}
+ ,{id:"",title:"onlylz"
+   ,url:["http://www.onlylz.com/postcache/92ou/page.html"
+   ,"http://www.onlylz.com/postcache/92ou/page-[2-3].html"
+   ,"http://www.onlylz.com/postcache/1hvit/page.html"
+   ,"http://www.onlylz.com/postcache/1hvit/page-[2-17].html"]
+   ,last_dt:1351388700000,filter:".html",ext:"false",cnt:"div#content"}
+ ,{id:"onlylz",title:"onlylzg"
+   ,url:["http://www.onlylz.com/postcache/32je/page.html"
+   ,"http://www.onlylz.com/postcache/32je/page-[2-700].html"]wsswswxzx
+   ,last_dt:1351388700000,filter:".html",ext:"false",cnt:"div#content"}   
+ ]}

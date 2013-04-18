@@ -9,6 +9,9 @@ public interface CONST {
 	String tmp_folder = "/tmp/log";
 	String EPUBLIB_GENERATOR_NAME = "niut v201110";
 
+	int HUGE_SIZE = 199000; // 699000
+	int TINY_SIZE =  50000;
+
 	String ENCODING = "UTF-8";
 	public static final String dateFormat = "yyyy-MM-dd";
 

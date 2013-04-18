@@ -39,7 +39,6 @@ public final class OpfResource {
 	private Element elmMeta;
 	private Element elmManifest;
 	private Element elmSpine, elmGuide;
-	private int HUGE_SIZE = 199000; // 699000
 	
 	public boolean isDirty(){return dirty;}
 	
@@ -70,6 +69,9 @@ public final class OpfResource {
 					continue;
 				}else if (name.equals("iTunesArtwork") || name.equals("iTunesMetadata.plist")){
 					continue;
+				}else if (name.equals("shucang.xml")){
+					// ADD 20130120
+					continue;
 				}else if (name.endsWith(".ttf")){
 					continue;
 				}
@@ -88,15 +90,28 @@ public final class OpfResource {
 		String ns = elmPkg.getNamespaceURI();
 		if (!CONST.NS_OPF.equals(ns)){
 			CONST.log.info("bad name space!: {} ", ns);
-			elmPkg.setAttribute("xmlns", CONST.NS_OPF);
 			if (elmPkg.hasAttribute("mlns")){
 				elmPkg.removeAttribute("mlns");
-				dirty = true;
 			}
+			elmPkg.setAttribute("xmlns", CONST.NS_OPF);
+			dirty = true;
 			try {
 			String sss = XmlUtil.node2String(this.docOpf);
 			this.docOpf = XmlUtil.string2Document(sss);
 			elmPkg = this.docOpf.getDocumentElement();
+			ns = elmPkg.getNamespaceURI();
+			if (!CONST.NS_OPF.equals(ns)){
+				CONST.log.info("still bad name space!: {} ", sss);
+				int pos2 = sss.indexOf("package xmlns=\"\"");
+				if (pos2!=-1){
+					pos2 += "package xmlns=\"\"".length()-1;
+					String new_s = sss.substring(0, pos2) + CONST.NS_OPF + sss.substring(pos2);
+					this.docOpf = XmlUtil.string2Document(new_s);
+					elmPkg = this.docOpf.getDocumentElement();
+					ns = elmPkg.getNamespaceURI();
+					CONST.log.info("final bad name space!: {} ", ns);
+				}
+			}
 			} catch (Exception e){
 				
 			}
@@ -131,6 +146,9 @@ public final class OpfResource {
 		// metadata
 		boolean meta_id= false;
 		elmMeta = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"metadata").item(0);
+		if (elmMeta == null){
+			elmMeta = (Element) elmPkg.getElementsByTagName("metadata").item(0);	
+		}
 		Node nd = elmMeta.getFirstChild();
 		while (nd != null){
 			if (nd instanceof Element){
@@ -171,6 +189,9 @@ public final class OpfResource {
 		Element elmRemove = null;
 		int count = 0;
 		elmManifest = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"manifest").item(0);
+		if (elmManifest == null){
+			elmManifest = (Element) elmPkg.getElementsByTagName("manifest").item(0);	
+		}
 		for ( nd = elmManifest.getFirstChild(); nd!=null; nd = nd.getNextSibling()){
 			if (!(nd instanceof Element)) continue;
 			Element elm = (Element)nd;
@@ -183,11 +204,16 @@ public final class OpfResource {
 			String id = elm.getAttribute("id");
 
 			// <item id="ncx" href="toc.ncx" media-type="text/xml" />
+			// <item id="ncx" href="fb.ncx" media-type="application/xhtml+xml"/>
 			
 			if (CONST.MIME.NCX.equals(type)){
 				//
 				ncx_href = item_href;
 			} else if ("text/xml".equals(type) && "toc.ncx".equals(item_href )){
+				ncx_href = item_href;
+				elm.setAttribute("media-type", CONST.MIME.NCX);
+				dirty = true;
+			} else if ("ncx".equals(id) && "fb.ncx".equals(item_href )){
 				ncx_href = item_href;
 				elm.setAttribute("media-type", CONST.MIME.NCX);
 				dirty = true;
@@ -238,6 +264,9 @@ public final class OpfResource {
 		}
 		l.clear();
 		elmSpine = (Element) elmPkg.getElementsByTagNameNS(CONST.NS_OPF,"spine").item(0);
+		if (elmSpine == null){
+			elmSpine = (Element) elmPkg.getElementsByTagName("spine").item(0);	
+		}
 		String ncx_id = elmSpine.getAttribute("toc");
 //		CONST.log.info("ncx_id:  {} ",  ncx_id );
 		nd = elmSpine.getFirstChild();
@@ -389,7 +418,7 @@ public final class OpfResource {
 	
 	public void compact() throws Exception{
 		dirty = true;
-		ZipEntryResource prev_res = null;
+		Resource prev_res = null;
 		List l = new ArrayList();
 		for (Node nd = elmSpine.getFirstChild(); nd != null; nd = nd.getNextSibling() ){
 			if (! (nd instanceof Element)) continue;
@@ -409,58 +438,56 @@ public final class OpfResource {
 			Resource res = items.get(id);
 			if (res == null){
 				l.add(elm);
-			} else if (res instanceof ZipEntryResource){
-				ZipEntryResource zres = (ZipEntryResource)res;
-				long size = zres.getSize();
-				if (size > HUGE_SIZE){
-					String parent = zres.getHref();
-					int ii = parent.lastIndexOf('/');
-					if (ii != -1){
-						parent = parent.substring(ii+1);
-					}
-					CONST.log.info("huge size " + size + ", " + parent);
-					List<String> list = zres.split();
+			} else{
+				long size = res.getSize();
+				if (size == 0) continue;
+				if (res instanceof ZipEntryResource){
+					ZipEntryResource zres = (ZipEntryResource)res;
+					zres.clean();
+					size = zres.getSize();
+				}
+				if (res instanceof StringResource){
+					prev_res = null;
+					continue;
+				}
+				if (size > CONST.HUGE_SIZE){
+					List<String> list = res.split();
 					int i = 0;
 					for (String s : list){
 						i++;
+<<<<<<< HEAD
 						
 						String href = parent+"_"+String.format("%03d", i)+".htm";
 						StringResource res_s = new StringResource(href);
+=======
+						String href = res.getId()+"_"+String.format("%03d", i)+".htm";
+						CONST.log.info("huge size " + href);
+						StringResource res_s = new StringResource(href, null);
+>>>>>>> 949bd75... init
 						res_s.loadString(s);
 						addItem(res_s);
 					}
 					prev_res = null;
 				} else if (prev_res == null) {
-					prev_res = zres;
-				} else if (zres.getId().startsWith("_test_")){
-					prev_res = zres;
+					prev_res = res;
+				} else if (res.getId().startsWith("_test_")){
+					prev_res = res;
 				} else {
-					String bytes = zres.data();
 					int offset = 5;
-					if (prev_res.mergeSameTitle(bytes, offset)){
+					if (prev_res.mergeSameTitle(res, offset)){
 						l.add(elm);
 						items.remove(id);
 					} else {
-//						CONST.log.info(" size " + size);
-						// need merge?
-						if (size < 10000) {
-							prev_res.append(bytes);
-							l.add(elm);
-							items.remove(id);
-						} else{
-							prev_res.append("");
-							prev_res = zres;
-						}
+						prev_res = res;
 					}
 					if (prev_res.getSize() > 120000) {
 						prev_res = null;
 					}
 				}
-			} else {
 			}
 		}
 		if (prev_res != null){
-			prev_res.append("");
+//			prev_res.append("");
 		}
 		for (Iterator i = l.iterator(); i.hasNext();){
 			Element e = (Element)i.next();

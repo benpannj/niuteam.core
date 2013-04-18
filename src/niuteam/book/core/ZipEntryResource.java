@@ -5,21 +5,28 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import niuteam.util.IOUtil;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 public class ZipEntryResource extends Resource{
 	private ZipFile zf;
 	private String base_path = "";
 	private String old_href = "";
-	
+	private String encoding = CONST.ENCODING;	
 	// for compact use
 //	private byte[] data = null;
 //	private ByteArrayOutputStream out = null;
@@ -34,6 +41,11 @@ public class ZipEntryResource extends Resource{
 		this.old_href = href;
 		this.mediaType = type;
 		this.base_path = path;
+	}
+	public OutputStream getOutputStream() throws Exception {
+		if (f == null) cal();
+		FileOutputStream fos = new FileOutputStream(f);
+		return fos;
 	}
 	public InputStream getInputStream() throws Exception {
 		
@@ -51,12 +63,29 @@ public class ZipEntryResource extends Resource{
 		} catch(Exception e){
 			CONST.log.error("ERROR: "+ old_href, e);
 		}
-		if (ins == null){
-			CONST.log.error("ERROR null: "+ old_href);
+		if (ins == null && zf!=null){
+			CONST.log.error("ERROR null: " + base_path + old_href);
+//			ZipEntry ze2 = zf.getEntry(base_path + old_href);
+//			if (ze2 != null)
+//			ins = zf.getInputStream(ze2);
+//			ZipEntry ze3 = zf.getEntry(old_href);
+			
+//			InputStream ins3 = zf.getInputStream(ze3);
+			
+			for (Enumeration entries = zf.entries();entries.hasMoreElements();) {
+				ZipEntry ze0 = (ZipEntry)entries.nextElement();
+				String name = ze0.getName();
+				CONST.log.info( name + ", " + (old_href .equals(name))  );
+				if (old_href .equals(name)){
+					ins = zf.getInputStream(ze0);
+					break;
+				}
+			}
+			
 		}
 		return ins;
 	}
-	public void cal() throws Exception{
+	private void cal() throws Exception{
 		InputStream ins = getInputStream();
 //		if (ins == null) return;
 //		File folder = new File(CONST.tmp_folder);
@@ -65,7 +94,7 @@ public class ZipEntryResource extends Resource{
 //		} else {
 //			folder.mkdirs();
 //		}
-		f = new File(CONST.tmp_folder, this.href);
+		f = new File(CONST.tmp_folder+File.separator+"f", this.href);
 		File folder = f.getParentFile();
 		if (!folder.exists()){
 			folder.mkdirs();
@@ -76,7 +105,7 @@ public class ZipEntryResource extends Resource{
 		fos.flush();
 	}
 	public void replaceCss() throws Exception {
-		f = new File(CONST.tmp_folder, this.href);
+		f = new File(CONST.tmp_folder+File.separator+"f", this.href);
 		File folder = f.getParentFile();
 		if (!folder.exists()){
 			folder.mkdirs();
@@ -88,6 +117,9 @@ public class ZipEntryResource extends Resource{
 	}
 
 	public long getSize(){
+		if (!CONST.MIME.HTM.equals(getMediaType()) ){
+			return 0;
+		}
 		if (f != null)
 			return f.length();
 		else {
@@ -100,52 +132,52 @@ public class ZipEntryResource extends Resource{
 			}
 		}
 	}
-	public List<String> split() throws Exception {
-		if (f == null) cal();
-		String html = data();
-		String temp;
-		html = XhtmlDoc.cleanHtml(html);
-		int start = 0, end = 0;
-		int offset = 120000;
-		boolean more = true;
-		int len = html.length();
-		Writer fwu = new OutputStreamWriter(new FileOutputStream(f), "utf-8");
-		end = html.indexOf("</p>", start+offset);
-		if (end != -1 && len-end >1000){
-			temp = html.substring(start, end+4);
-			fwu.write(temp);
-			fwu.write("</body></html>");
-			more = true;
-		} else {
-//			temp = html.substring(start);
-			fwu.write(html);
-			more = false;
-		}
-		fwu.flush();
-		fwu.close();
-		StringBuffer buf = new StringBuffer();
-		List<String> list = new ArrayList<String>();
-		while (more){
-			buf.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>");
-			buf.append("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title></title>")
-			.append("<link href=\"../Styles/main.css\" rel=\"stylesheet\" type=\"text/css\" />")
-			.append("</head><body>");
-			start = end+4;
-			end = html.indexOf("</p>", start+offset);
-			if (end != -1 && len-end >1000){
-				buf.append( html.substring(start, end+4)).append("</body></html>");
-				more = true;
-			} else {
-				buf.append(html.substring(start));
-				more = false;
-			}
-			list.add(buf.toString());
-			buf.setLength(0);
-		}
-		return list;
-		
-		
-	}
+//	public List<String> split() throws Exception {
+//		if (f == null) cal();
+//		String html = data();
+//		String temp;
+//		html = XhtmlDoc.cleanHtml(html);
+//		int start = 0, end = 0;
+//		int offset = 120000;
+//		boolean more = true;
+//		int len = html.length();
+//		Writer fwu = new OutputStreamWriter(new FileOutputStream(f), "utf-8");
+//		end = html.indexOf("</p>", start+offset);
+//		if (end != -1 && len-end >1000){
+//			temp = html.substring(start, end+4);
+//			fwu.write(temp);
+//			fwu.write("</body></html>");
+//			more = true;
+//		} else {
+////			temp = html.substring(start);
+//			fwu.write(html);
+//			more = false;
+//		}
+//		fwu.flush();
+//		fwu.close();
+//		StringBuffer buf = new StringBuffer();
+//		List<String> list = new ArrayList<String>();
+//		while (more){
+//			buf.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>");
+//			buf.append("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title></title>")
+//			.append("<link href=\"../Styles/main.css\" rel=\"stylesheet\" type=\"text/css\" />")
+//			.append("</head><body>");
+//			start = end+4;
+//			end = html.indexOf("</p>", start+offset);
+//			if (end != -1 && len-end >1000){
+//				buf.append( html.substring(start, end+4)).append("</body></html>");
+//				more = true;
+//			} else {
+//				buf.append(html.substring(start));
+//				more = false;
+//			}
+//			list.add(buf.toString());
+//			buf.setLength(0);
+//		}
+//		return list;
+//		
+//		
+//	}
 	public void append(String d) throws Exception {
 		if (f == null) cal();
 		String html = data();
@@ -208,8 +240,11 @@ public class ZipEntryResource extends Resource{
 		return s.substring(0, offset);
 		}
 	}
-	public boolean mergeSameTitle(String d, int offset)  throws Exception {
+
+
+	public boolean _mergeSameTitle(String d, int offset)  throws Exception {
 		if (f == null) cal();
+	
 		String html = data();
 		String title = getTitle(d, offset);
 		if (title==null || !title.equals(getTitle(html, offset))){

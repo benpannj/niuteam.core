@@ -3,13 +3,12 @@ package niuteam.util;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import com.adobe.epubcheck.api.EpubCheck;
-import com.adobe.epubcheck.api.Report;
-import com.adobe.epubcheck.util.DefaultReportImpl;
+import java.util.List;
+import java.util.zip.ZipFile;
 
 import niuteam.book.core.CONST;
 import niuteam.book.core.Resource;
+import niuteam.book.core.TextResource;
 import niuteam.book.core.XhtmlDoc;
 import niuteam.book.epub.Epub;
 
@@ -45,10 +44,11 @@ public class EpubUtil {
 
 			try {
 			Epub bk = new Epub();
-			bk.readEpub(epubFile);
+			ZipFile zf = bk.readEpub(epubFile);
 			if (bk.isDirty() ){
 				File outFile =  new File(folder, name + ".zip");
 				bk.writeEpub(outFile);
+				zf.close();
 				epubFile.renameTo(backup);
 				outFile.renameTo(new File(folder, name));
 				// checkEpub(epubFile.getAbsolutePath());
@@ -63,20 +63,20 @@ public class EpubUtil {
 		}
 		
 	}
-	public static void checkEpub(String epubName) {
-		CONST.log.info("checkEpub -----------------------------");
-		Report report = new DefaultReportImpl(epubName);
-		if (!epubName.endsWith(".epub"))
-			report.warning(null, 0, "filename does not include ‘.epub’ suffix");
-
-		EpubCheck check = new EpubCheck(new File(epubName), report);
-		if (check.validate())
-			System.out.println("No errors or warnings detected");
-		else {
-			System.err.println("\nCheck finished with warnings or errors!\n");
-		}
-	}
-	private String encoding = "gb2312";
+//	public static void checkEpub(String epubName) {
+//		CONST.log.info("checkEpub -----------------------------");
+//		Report report = new DefaultReportImpl(epubName);
+//		if (!epubName.endsWith(".epub"))
+//			report.warning(null, 0, "filename does not include ���.epub��� suffix");
+//
+//		EpubCheck check = new EpubCheck(new File(epubName), report);
+//		if (check.validate())
+//			System.out.println("No errors or warnings detected");
+//		else {
+//			System.err.println("\nCheck finished with warnings or errors!\n");
+//		}
+//	}
+	private String encoding = CONST.ENCODING;
 	public void setEncoding(String s){
 		this.encoding = s;
 	}
@@ -84,20 +84,21 @@ public class EpubUtil {
 		Epub bk = new Epub();
 		count = 100;
 		String title = folder.getName();
-		File tmp_folder = new File("/tmp", title);
+		File tmp_folder = new File(CONST.tmp_folder+"/f", title);
 		if (tmp_folder.exists()) {
 			
 		} else {
 			tmp_folder.mkdirs();
 		}
-		bk.create(title, "Ben Pan","cn");
+		bk.create(title, "Ben Pan","zh");
 //		bk.setMetadata(CONST.DCTags.subject, "Ben Pan subject ");
 //		bk.setMetadata(CONST.DCTags.title, "test title ");
 		bk.setMetadata(CONST.DCTags.meta, folder.getAbsolutePath() );
 //		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
 		addFolder(folder, bk, tmp_folder,"p_");
-		File outFile =  new File("/tmp", title+".epub");
+		File outFile =  new File(CONST.tmp_folder, title+".epub");
 		bk.writeEpub(outFile);
+//		bk.compact();
 //		checkEpub(outFile.getAbsolutePath());
 		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
@@ -118,17 +119,19 @@ public class EpubUtil {
 				continue;
 			}
 			String name = f.getName();
+			long len = f.length();
+			if (len < 10) continue;
 			String type = Resource.determineMediaType(name);
 			if (CONST.MIME.HTM.endsWith( type )) {
-				XhtmlDoc doc = new XhtmlDoc(f, encoding);
 //				int pos = name.lastIndexOf(".txt");
 				if (name.endsWith(".txt")){
+					String id = "p" + count+"."+String.format("%03d", i);
+					TextResource res = new TextResource(id);
+					res.loadFile(f, encoding, id);
+					bk.addResource(res);
 //					continue;
-					doc.analyzeTxt(name.substring(0, name.length()-4));
-					File fout = new File(tmp_folder, "p" + count+"."+String.format("%03d", i)+".htm" );
-					doc.mergeTmpl(fout);
-					bk.addItem(fout);
 				} else {
+					XhtmlDoc doc = new XhtmlDoc(f, encoding);
 				doc.analyzeTitle("<TITLE>", "</TITLE>", name.substring(0, name.length()-4));
 				doc.analyzeContent("<TD CLASS=ART>", "<DIV class=FL>");
 //				doc.analyzeContent("<!--HTMLBUILERPART0-->", "<!--/HTMLBUILERPART0-->"); //"<blockquote>", "</blockquote>"
@@ -148,13 +151,13 @@ public class EpubUtil {
 	// merge epub from web url
 	public void web2epub(String site, String title, int page) throws Exception {
 		Epub bk = new Epub();
-		File tmp_folder = new File("/tmp", title);
+		File tmp_folder = new File(CONST.tmp_folder+"/f", title);
 		if (tmp_folder.exists()) {
 			
 		} else {
 			tmp_folder.mkdirs();
 		}
-		bk.create(title, "Ben Pan","cn");
+		bk.create(title, "Ben Pan","zh");
 //		bk.setMetadata(CONST.DCTags.subject, "Ben Pan subject ");
 //		bk.setMetadata(CONST.DCTags.title, "test title ");
 		bk.setMetadata(CONST.DCTags.meta, site+"/"+title);
@@ -198,9 +201,60 @@ public class EpubUtil {
 			}
 		}
 		
-		File outFile =  new File("/tmp", title+".epub");
+		File outFile =  new File(CONST.tmp_folder, title+".epub");
 		bk.writeEpub(outFile);
 //		checkEpub(outFile.getAbsolutePath());
 		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
+	public void file2epub( File folder) throws Exception {
+		File tmp_folder = new File(CONST.tmp_folder+"/f");
+		if (tmp_folder.exists()) {
+			
+		} else {
+			tmp_folder.mkdirs();
+		}
+
+		File[] files = folder.listFiles();
+		for (int i = 0; i < files.length; i++){
+			File f = files[i];
+			if (f.isDirectory() ) {
+				continue;
+			}
+			Epub bk = new Epub();
+			String name = f.getName();
+			String title = name.substring(0, name.length()-4);
+			bk.create(title, "Ben Pan","zh");
+			bk.setMetadata(CONST.DCTags.meta, f.getAbsolutePath() );
+			String type = Resource.determineMediaType(name);
+			if (CONST.MIME.HTM.endsWith( type )) {
+//				int pos = name.lastIndexOf(".txt");
+				if (name.endsWith(".txt")){
+					String id = "p" + count+"."+String.format("%03d", i);
+					TextResource res = new TextResource(id);
+					res.loadFile(f, encoding, id);
+					bk.addResource(res);
+				} else {
+					XhtmlDoc doc = new XhtmlDoc(f, encoding);
+					doc.analyzeTitle("<TITLE>", "</TITLE>", title);
+					doc.analyzeContent("<TD CLASS=ART>", "<DIV class=FL>");
+	//				doc.analyzeContent("<!--HTMLBUILERPART0-->", "<!--/HTMLBUILERPART0-->"); //"<blockquote>", "</blockquote>"
+					File fout = new File(tmp_folder, name );
+					doc.mergeTmpl(fout);
+					bk.addItem(fout);
+				}
+			} else if (CONST.MIME.CSS.equals(type)){
+			} else if (CONST.MIME.PNG.equals(type) || CONST.MIME.GIF.equals(type) || CONST.MIME.JPG.equals(type)){
+				bk.addItem(f);
+			} else {
+				bk.addItem(f);
+				CONST.log.info("unknown: " + name);
+			}
+			File outFile =  new File(CONST.tmp_folder, title+".epub");
+			bk.writeEpub(outFile);
+//			bk.compact();
+//			checkEpub(outFile.getAbsolutePath());
+			CONST.log.info(" E --"+ outFile.getAbsolutePath());
+		}
+
+	}	
 }

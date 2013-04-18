@@ -43,7 +43,7 @@ public class Exif {
 				int ret = organize(files[i]);
 				if (ret < -2){
 					CONST.log.info( "bad " +  files[i].getAbsolutePath());
-					dump(files[i]);
+//					dump(files[i]);
 				}
 			}
 			if ( f.listFiles().length == 0){
@@ -51,30 +51,65 @@ public class Exif {
 				f.delete();
 			}
 		} else {
+			String name = f.getName();
+			if (name.startsWith("MVI")){ // || name.endsWith("dup")
+				CONST.log.info("debug name: " + name);
+			}
+			int pos = name.lastIndexOf('.');
+			if (pos == -1 && name.startsWith("MVI")){
+				name = name+".avi";
+				pos = name.lastIndexOf('.');
+			}
+			if (pos == -1){
+				CONST.log.info("name: " + name);
+				return -5;
+			}
+			String ext = name.substring(pos);
+			
 			Date date = null;
 			String productor = null;
 			Metadata metadata = null;
 			try {
 				metadata = JpegMetadataReader.readMetadata(f);
-			} catch (Exception e) {
-				CONST.log.error( "bad " +  f.getAbsolutePath());
+			} catch (Throwable e) {
+				CONST.log.error( "bad no meta: " +  f.getAbsolutePath());
 			}
 			if (metadata == null){
-				return -2;
-			}
-			Directory exif_sub;
-			exif_sub = metadata.getDirectory(ExifSubIFDDirectory.class);
-			if (exif_sub != null) {
-				date = exif_sub.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-			}
-			Directory exif_ifd0 = metadata.getDirectory(ExifIFD0Directory.class);
-			if (exif_ifd0 != null) {
-				productor = exif_ifd0.getDescription( ExifIFD0Directory.TAG_MAKE);
-				if (date == null){
-					date = exif_ifd0.getDate(ExifIFD0Directory.TAG_DATETIME);
+				if (".avi".equalsIgnoreCase(ext)) {
+					long l = f.lastModified();
+					date = new Date(l);
+					productor = "Cannon";
+				} else if (".rmvb".equalsIgnoreCase(ext)) {
+					return -2;
+				}else{
+					long l = f.lastModified();
+					date = new Date(l);
+					productor = "Zte";
+				}
+			}else {
+				Directory exif_sub;
+				exif_sub = metadata.getDirectory(ExifSubIFDDirectory.class);
+				if (exif_sub != null) {
+					date = exif_sub.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+				}
+				Directory exif_ifd0 = metadata.getDirectory(ExifIFD0Directory.class);
+				if (exif_ifd0 != null) {
+					productor = exif_ifd0.getDescription( ExifIFD0Directory.TAG_MAKE);
+					if (date == null){
+						date = exif_ifd0.getDate(ExifIFD0Directory.TAG_DATETIME);
+					}
 				}
 			}
-			if (date == null) return -4;
+			if (date == null){
+				if (".jpg".equalsIgnoreCase(ext)) {
+					long l = f.lastModified();
+					date = new Date(l);
+					productor = "Cannon";
+				}else{
+					return -4;
+				}
+//				return -4;
+			}
 			Calendar c = Calendar.getInstance();
 			c.set(1990, 1, 1);
 			if ( date.before(c.getTime()) ){
@@ -93,9 +128,6 @@ public class Exif {
 				folder = parent;
 			}
 
-			String name = f.getName();
-			int pos = name.lastIndexOf('.');
-			String ext = name.substring(pos);
 			pos = 0;
 			if (productor !=null && productor.length() > 2) {
 				ext = productor.substring(0, 2)+ext;
@@ -113,7 +145,11 @@ public class Exif {
 				long size_r = fn.length();
 				if (size_l == size_r){
 					if (same_folder){
-						return 0;
+						if (name.equals(f_name)) {
+							return 0;
+						} else {
+							ext = ext+".dup";
+						}
 					} else {
 						CONST.log.info( " same size, may exist "+fn.getAbsolutePath() +   ", " + f.getAbsolutePath());
 						ext = ext+".dup";

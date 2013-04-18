@@ -3,6 +3,7 @@ package niuteam.book.epub;
 import java.util.zip.ZipOutputStream;
 
 import niuteam.book.core.CONST;
+import niuteam.book.core.Resource;
 import niuteam.util.XmlUtil;
 
 import org.w3c.dom.Document;
@@ -130,4 +131,15 @@ public class NcxResource {
 		e_p.appendChild(e_c);
 		
 	}
+	public void addItem(Resource res){
+		if (CONST.MIME.HTM.equals( res.getMediaType() ) ) {
+			dirty = true;
+			String href = res.getHref();
+			String title = res.getTitle();
+			if (title == null){
+				title = res.getId();
+			}
+			addNav(title, href);
+		}
+	}	
 }
