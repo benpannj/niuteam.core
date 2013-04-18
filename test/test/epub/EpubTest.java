@@ -2,8 +2,6 @@ package test.epub;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -17,9 +15,7 @@ import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
 import niuteam.rss.RssSpinner;
 import niuteam.util.EpubUtil;
-import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
-import niuteam.util.WebSpinner;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -153,45 +149,13 @@ public class EpubTest extends TestCase {
 //		fwu.close();
 
 //		getTitleFromHhc("s");
-		String url = "http://zh.wikipedia.org";
-//		url = "http://www.tieku.org/199375/1.html";
-//		url = "http://bbs.weiphone.com/read-htm-tid-2300277.html";
-//		WebSpinner.down("bbs.weiphone.com", "2300277", 1);
-	        
-//		XhtmlDoc doc = new XhtmlDoc();
-//		String html = doc.downloadUrlContent(url, encoding);
-//		CONST.log.info("" + html);
-		File folder = new File("/home/ben/doc/etc");
-		File[] fs = folder.listFiles();
-		for (File f : fs){
-			String epub_txt = f.getName();
-			String name = epub_txt.substring(0, epub_txt.lastIndexOf('.'));
-			File f_epub = new File(folder, name);
-			if (f_epub.exists()) continue;
-//			f.renameTo(new File(folder, f.getName()+".txt"));
-			InputStream ins = new FileInputStream(f);
-			StringWriter out2 = new StringWriter();
-			IOUtil.copy(new InputStreamReader(ins, "utf-8"), out2 );
-			StringBuffer buf = new StringBuffer(out2.toString());
-			int pos = buf.indexOf("remotedown.");
-			if (pos < 0){
-				continue;
-			}
-			buf.insert(pos, '/');
-			String url_epub = buf.toString();
-//			CONST.log.info();
-//			try {
-//			WebSpinner.down(url_epub, f_epub, 1);
-//			}catch(Exception e){
-//				CONST.log.info("next down: " + e.getMessage());
-////				break;
-//			}
-		}
+//		String url = "http://zh.wikipedia.org";
+//		url = "http://www.tieku.org/58387/1.html";
+
 		EpubUtil util = new EpubUtil();
 //		util.setEncoding("utf-8");
 //		util.web2epub("www.onlylz.com/postcache","13lq",5);
 
-//		util.web2epub("www.tieku.org","199375",300);
 		// 199375 
 		// 58387
 		// http://www.tieku001.com/226559/1.html
@@ -218,6 +182,7 @@ public class EpubTest extends TestCase {
 		}
 	}
 	private int count = 0;
+//	@Test
 	public void _testMergeEpub() throws Exception{
 		CONST.log.info(" merge begin: ");
 		Epub bk = new Epub();
@@ -429,4 +394,5 @@ public class EpubTest extends TestCase {
 		
 		CONST.log.info(""+ cnt);
 	}
+	
 }
