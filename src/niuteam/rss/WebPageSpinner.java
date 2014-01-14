@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import niuteam.book.core.CONST;
 import niuteam.book.epub.Epub;
@@ -41,7 +43,7 @@ public class WebPageSpinner {
 			JSONObject j = ary.getJSONObject(i);
 			String id = j.optString("id");
 			if (id.length() < 1) continue;
-			File tmp_folder = new File(CONST.tmp_folder+"/f", id);
+			File tmp_folder = new File(IOUtil.getTempFolder()+"/f", id);
 			if (tmp_folder.exists()) {
 			} else {
 				tmp_folder.mkdirs();
@@ -66,10 +68,10 @@ public class WebPageSpinner {
 	}	
 	public void readPages(JSONArray urls,String id, String title, JSONObject json_config) throws Exception{
 		long now = System.currentTimeMillis();
-		File outFile =  new File(CONST.tmp_folder, id+now+".epub");
+		File outFile =  new File(IOUtil.getTempFolder(), id+now+".epub");
 		Epub bk = new Epub();
 		if (outFile.exists()){
-			File destFile =  new File(CONST.tmp_folder, id+now+"a.epub");
+			File destFile =  new File(IOUtil.getTempFolder(), id+now+"a.epub");
 			outFile.renameTo(destFile );
 			bk.readEpub(destFile);
 		} else {
@@ -105,24 +107,49 @@ public class WebPageSpinner {
 		bk.writeEpub(outFile);
 		CONST.log.info(" Merge ok, send out. --"+ outFile.getAbsolutePath()  );
 	}
-	public void readHtml(String url, JSONObject json_config,Epub bk) throws Exception{
+	private List pages = new ArrayList();
+//	private String site = "";
+	public void readHtml(String full_url, JSONObject json_config,Epub bk) throws Exception{
+		if (full_url.contains("pr03.html")){
+			count++;
+		}
 		String cnt = json_config.optString("cnt");
-		CONST.log.info("" + url +", " + cnt);
 		org.jsoup.nodes.Document doc;
-		
+		String url = full_url;
+		int pos = full_url.indexOf("#");
+		if (pos < 0){
+			// new page
+		}else if (pos == 0){
+			return;
+		} else if (pos > 1){
+			url = full_url.substring(0,  pos);
+		}
+		CONST.log.info("" + full_url +", " + cnt + ", "+ url);
+		if (pages.contains(url)){
+			return;
+		}
+		pages.add(url);
 		String encoding = json_config.optString("encoding", CONST.ENCODING);
-//		File f = new File(CONST.tmp_folder+"/f",url);
+//		File f = new File(IOUtil.getTempFolder()+"/f",url);
 //		if (!f.exists()){
 //		}else{
 //			doc = Jsoup.parse(f, encoding);
 //		}
-			doc = Jsoup.connect(url)
+		doc = Jsoup.connect(url)
 			.userAgent("Opera/9.80 (X11; Linux x86_64; U; en) Presto/2.10.229 Version/11.61")
 			.header("Accept", "text/html")
 //			.data("wd", "Java")
 			  .timeout(15000)
 			  .get();
 //			return;
+		// index
+		Element elm_index = null;
+		String index = json_config.optString("index");
+//		index = "div.toc";
+		if (index.length() > 1){
+			elm_index = doc.select(index).first();;
+		}
+		// content
 		Element elm;
 		String title = doc.title();
 		if (cnt.length() > 1){
@@ -142,7 +169,8 @@ public class WebPageSpinner {
 		s = elm.html();
 
 		Whitelist wl = new Whitelist();
-		wl.addTags("p","span","br");//
+		wl.addTags("p","span","pre","br","li","dl","ul","dt");//
+		wl.addTags("a").addAttributes("href");
 		s = Jsoup.clean(s, wl);
 		//
 		s.replaceAll("&nbsp;", " ");
@@ -157,20 +185,46 @@ public class WebPageSpinner {
 		String href = "p"+String.format("%03d", count)+".htm";				
 		bk.addString(href, title, content);
 		
+		if (elm_index != null){
+			Elements links = elm_index.select("a[href]");
+			IOUtil.print("\nLinks: (%d)", links.size());
+			String filter = json_config.optString("filter");
+			String site = null;
+			if (url.endsWith("/")){
+				site = url;
+			}else{
+				int pos2 = url.lastIndexOf('/');
+				site = url.substring(0, pos2+1);
+			}
+			for (Element link : links) {
+//	            String href = link.text();
+	            String href2 = link.attr("abs:href");
+	            String href3 = link.attr("href");
+	            if (href3!= null && href3.endsWith(filter) && !href3.contains("/")){
+	            	String url3 = site + href3;
+	    			try {
+	    				readHtml(url3, json_config, bk);
+	    			}catch(Exception e){
+	    				IOUtil.print(" * a: <%s>  (%s)", url3, IOUtil.trim(link.text(), 35));
+	    			}
+//	            	break;
+	            }
+			}			
+		}
 	}
 	public void readIndexPages(String urls,String id, String title, JSONObject json_config) throws Exception{
 		long now = System.currentTimeMillis();
-		File outFile =  new File(CONST.tmp_folder, id+now+".epub");
+		File outFile =  new File(IOUtil.getTempFolder(), id+now+".epub");
 		Epub bk = new Epub();
 		if (outFile.exists()){
-			File destFile =  new File(CONST.tmp_folder, id+now+"a.epub");
+			File destFile =  new File(IOUtil.getTempFolder(), id+now+"a.epub");
 			outFile.renameTo(destFile );
 			bk.readEpub(destFile);
 		} else {
 			bk.create(title, user,"zh");
 		}
 		String encoding = json_config.optString("encoding", CONST.ENCODING);
-		File f = new File(CONST.tmp_folder+"/f",id+".htm");
+		File f = new File(IOUtil.getTempFolder()+"/f",id+".htm");
 		Document doc;
 		if (!f.exists()){
 			String url = urls;

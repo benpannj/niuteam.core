@@ -46,7 +46,7 @@ public class Epub {
 //		ZipEntry ze = new ZipEntry(CONST.FILE_ROOT);
 		ze = zf.getEntry(CONST.FILE_ROOT);
 		if (ze == null) {
-			CONST.log.warn("not valid epub ! {} ", epub.getAbsolutePath());
+			CONST.log.warn("not valid epub !  "+ epub.getAbsolutePath());
 			return zf;
 		}
 		//
@@ -77,7 +77,7 @@ public class Epub {
 			docNcx = XmlUtil.stream2doc(zf.getInputStream(ze));
 		}
 		if (docNcx == null){
-			CONST.log.error("[ERROR] bad ncx file: {}, epub:  {} ", ncx_href,  epub.getAbsoluteFile() );
+			CONST.log.error("[ERROR] bad ncx file: "+ncx_href+", epub:  "+  epub.getAbsoluteFile() );
 //			this.ncx = new NcxResource();
 		} else {
 			this.ncx = new NcxResource();
@@ -238,7 +238,7 @@ public class Epub {
 //		ZipEntry ze = new ZipEntry(CONST.FILE_ROOT);
 		ze = zf.getEntry(CONST.FILE_ROOT);
 		if (ze == null) {
-			CONST.log.warn("not valid epub ! {} ", epub.getAbsolutePath());
+			CONST.log.warn("not valid epub !  "+ epub.getAbsolutePath());
 			return;
 		}
 		ze = new ZipEntry(CONST.FILE_INFO);
@@ -266,7 +266,7 @@ public class Epub {
 			Element elm = (Element)nd;
 			String key = elm.getLocalName();
 			if (!"item".equals(key)){
-				CONST.log.warn(" not item ? {}", key);
+				CONST.log.warn(" not item ? "+ key);
 			}
 			String type = elm.getAttribute("media-type");
 			String item_href = elm.getAttribute("href");
@@ -289,7 +289,7 @@ public class Epub {
 				if (prefix != null){
 					id = prefix + id;
 				} else {
-					CONST.log.warn(" has item ? {}", item_href);
+					CONST.log.warn(" has item ? "+ item_href);
 					continue;
 				}
 			}
@@ -314,7 +314,7 @@ public class Epub {
 				Element elm = (Element)nd;
 				String key = elm.getLocalName();
 				if (!"itemref".equals(key)){
-					CONST.log.warn(" not itemref ? {} ", key);
+					CONST.log.warn(" not itemref ?  "+ key);
 					continue;
 				}
 				String idref = elm.getAttribute("idref");
@@ -328,7 +328,8 @@ public class Epub {
 					opf.addItem(r);
 					map.remove(idref);
 				}else {
-					CONST.log.warn(" bad item ", idref);
+					
+					CONST.log.warn(" bad item "+idref );
 				}
 			}
 			nd = nd.getNextSibling();

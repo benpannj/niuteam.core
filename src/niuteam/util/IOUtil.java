@@ -141,5 +141,10 @@ public class IOUtil {
 	public static void print(String msg, Object... args) {
         System.out.println(String.format(msg, args));
     }
-
+    public static String getTempFolder() {
+    	String dir = System.getProperty("java.io.tmpdir");
+    	// os.name
+    	// user.home
+    	return dir;
+    }
 }

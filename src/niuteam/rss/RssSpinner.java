@@ -72,7 +72,7 @@ public class RssSpinner {
 //				if (!"blogjava".equals(id)){
 //					continue;
 //				}
-				bk_all.addString(id+".htm", title, title+ ", " + url);
+				bk_all.addString(id+".htm", title, "<p>"+title+ ", " + url+"</p>");
 				// build rss book
 				long last_dt = readRss(url, id, title, old_last_dt, j);
 				// check update date
@@ -89,9 +89,9 @@ public class RssSpinner {
 			output.write(json.toString(2).getBytes());
 			output.flush();
 			output.close();
-			File outFile =  new File(CONST.tmp_folder, "ALL."+yymmdd+".epub");
+			File outFile =  new File(IOUtil.getTempFolder(), "ALL."+yymmdd+".epub");
 			if (outFile.exists()){
-				File destFile =  new File(CONST.tmp_folder, "ALL."+yymmdd+System.currentTimeMillis()+".epub");
+				File destFile =  new File(IOUtil.getTempFolder(), "ALL."+yymmdd+System.currentTimeMillis()+".epub");
 				outFile.renameTo(destFile );
 			}
 			bk_all.writeEpub(outFile);
@@ -99,16 +99,16 @@ public class RssSpinner {
 		}
 	}	
 	public long readRss(String url,String id, String title, long last_dt, JSONObject json_config) throws Exception{
-		File tmp_folder = new File(CONST.tmp_folder+"/f", id);
+		File tmp_folder = new File(IOUtil.getTempFolder()+"/f", id);
 		if (tmp_folder.exists()) {
 		} else {
 			tmp_folder.mkdirs();
 		}
 		long newest_dt = last_dt;
-		File outFile =  new File(CONST.tmp_folder, id+yymmdd+".epub");
+		File outFile =  new File(IOUtil.getTempFolder(), id+yymmdd+".epub");
 		Epub bk = new Epub();
 		if (outFile.exists()){
-			File destFile =  new File(CONST.tmp_folder, id+yymmdd+count+".epub");
+			File destFile =  new File(IOUtil.getTempFolder(), id+yymmdd+count+".epub");
 			count++;
 			outFile.renameTo(destFile );
 			bk.readEpub(destFile);
@@ -252,7 +252,7 @@ public class RssSpinner {
 		}catch (Exception e){
 			s = "";
 			String html = doc.html();
-			File f = new File(CONST.tmp_folder+"/f", "p"+String.format("%03d", count)+".htm");
+			File f = new File(IOUtil.getTempFolder()+"/f", "p"+String.format("%03d", count)+".htm");
 			FileOutputStream output = new FileOutputStream(f);
 //			byte[] imgdata = request.bodyAsBytes();
 			output.write(html.getBytes());
@@ -282,7 +282,7 @@ public class RssSpinner {
             org.jsoup.select.Elements links = doc
                     .select("link[type=application/rss+xml]");
  
-            CONST.log.info("No of RSS links found", " " + links.size());
+            CONST.log.info("No of RSS links found: " + links.size());
  
             // check if urls found or not
             if (links.size() > 0) {

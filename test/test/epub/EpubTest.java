@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.zip.ZipFile;
 
 import junit.framework.TestCase;
@@ -15,6 +16,7 @@ import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
 import niuteam.rss.RssSpinner;
 import niuteam.util.EpubUtil;
+import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
 
 import org.jsoup.Jsoup;
@@ -30,7 +32,18 @@ import com.itextpdf.text.pdf.SimpleBookmark;
 
 public class EpubTest extends TestCase {
 	static{
-		File tmp_folder = new File(CONST.tmp_folder);
+		Properties prop = new Properties();
+		prop.setProperty("log4j.rootLogger", "debug, stdout");
+		prop.setProperty("log4j.appender.stdout", "org.apache.log4j.ConsoleAppender");
+		prop.setProperty("log4j.appender.stdout.layout", "org.apache.log4j.PatternLayout");
+		String pat = 
+//				"%-5p %d{ISO8601} (%C:%L) (%F:%L) %M %x - %m\n";
+		 "%5p (%F:%L) %M() - %m%n";
+		prop.setProperty("log4j.appender.stdout.layout.ConversionPattern", pat);
+
+				
+		org.apache.log4j.PropertyConfigurator.configure(prop);
+		File tmp_folder = new File(IOUtil.getTempFolder());
 		if (tmp_folder.exists()) {
 			
 		} else {
@@ -41,7 +54,12 @@ public class EpubTest extends TestCase {
 
 //	
 	public void _testReadEpubFile() throws Exception {
-		File folder = new File("/tmp/txt");
+		File folder = new File(IOUtil.getTempFolder(),"txt");
+		if (!folder.exists()){
+			folder.mkdirs();
+			return;
+		}
+		
 		File[] fs = folder.listFiles();
 		EpubUtil util = new EpubUtil();
 //		util.fixEpub(folder, false);
@@ -51,7 +69,7 @@ public class EpubTest extends TestCase {
 			File backup = new File(folder, name+".zip");
 			if (backup.exists()) continue;
 			CONST.log.info("testReadEpubFile B -------------------------- " + name);
-//			File epubFile = new File("/tmp/etc", "1.epub");
+//			File epubFile = new File("IOUtil.getTempFolder()/etc", "1.epub");
 			// checkEpub(epubFile.getAbsolutePath());
 	//		FileInputStream in = new FileInputStream(epubFile);
 			Epub bk = new Epub();
@@ -77,20 +95,20 @@ public class EpubTest extends TestCase {
 		CONST.log.info("testFixEpubFile B -----------------------------");
 		
 //		OpfResource opf = new OpfResource();
-//		InputStream in = new FileInputStream("/tmp/OEBPS/content.opf");
+//		InputStream in = new FileInputStream("IOUtil.getTempFolder()/OEBPS/content.opf");
 //		// IOUtil.loadTemplate(CONST.FILE_OPF)
 //		Document docOpf = XmlUtil.stream2doc(in);
 //		opf.readXml(CONST.FILE_OPF, docOpf, null);
 //		CONST.log.info("  dirty?  " + opf.isDirty());
 //		String s = XmlUtil.node2String(opf.getDoc());
-		File folder = new File("/tmp/txt");
+		File folder = new File(IOUtil.getTempFolder(),"txt");
 //		File folder = new File("/home/ben/doc/etc");
 		// /mnt/DOC/Book/K85/epub
-		// /tmp
+		// IOUtil.getTempFolder()
 		EpubUtil util = new EpubUtil();
 		String s = folder.getAbsolutePath();
 		util.fixEpub(folder, false);
-		CONST.log.info("testFixEpubFile E ----------------------------- {}", s);
+		CONST.log.info("testFixEpubFile E ----------------------------- "+ s);
 	}
 
 	
@@ -104,26 +122,30 @@ public class EpubTest extends TestCase {
 //		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test ");
 //		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
 		// add chapter 1 
-//		File f = new File("/tmp", "git.htm");
+//		File f = new File(IOUtil.getTempFolder(), "git.htm");
 //		bk.addItem(f);
 		// 
 		 bk.addString("test.htm", "test title", "<html><body>Hello, world!</body></html>");
 		
-		File outFile =  new File("/tmp", "test_create.epub");
+		File outFile =  new File(IOUtil.getTempFolder(), "test_create.epub");
 		bk.writeEpub(outFile);
 //		EpubUtil.checkEpub(outFile.getAbsolutePath());
 		CONST.log.info("testCreateEpubFile E -----------------------------");
 	}
 
 //	@Test
-	public void testCreateFromFolder() throws Exception {
+	public void _testCreateFromFolder() throws Exception {
 		CONST.log.info("testCreateFromFolder B -----------------------------");
 //		getTitleFromHhc("s");
-		File folder = new File("/tmp/txt");
+		File folder = new File(IOUtil.getTempFolder(), "txt");
+		if (!folder.exists()){
+			folder.mkdirs();
+			return;
+		}
 		EpubUtil util = new EpubUtil();
 //		util.setEncoding("gbk");
-//		util.folder2epub(folder);
-		util.file2epub(folder);
+		util.folder2epub(folder);
+//		util.file2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -138,12 +160,12 @@ public class EpubTest extends TestCase {
 		String encoding = "utf-8";
 		entry(true);
 //		StringWriter out = new StringWriter();
-//		IOUtil.copy(new InputStreamReader(new FileInputStream("/tmp/etc/gaoh.html"), encoding), out );
+//		IOUtil.copy(new InputStreamReader(new FileInputStream("IOUtil.getTempFolder()/etc/gaoh.html"), encoding), out );
 //		String html = out.toString();
 //		Whitelist epub = new Whitelist();
 //		epub.addTags("p","pre","br","li","ul");
 //		String safe = Jsoup.clean(html, epub);
-//		Writer fwu = new OutputStreamWriter(new FileOutputStream("/tmp/etc/g.htm"), "utf-8");
+//		Writer fwu = new OutputStreamWriter(new FileOutputStream("IOUtil.getTempFolder()/etc/g.htm"), "utf-8");
 //		fwu.write(safe);
 //		fwu.flush();
 //		fwu.close();
@@ -184,32 +206,36 @@ public class EpubTest extends TestCase {
 	private int count = 0;
 //	@Test
 	public void _testMergeEpub() throws Exception{
+//		
+		File folder = new File(IOUtil.getTempFolder(),"txt");
+		if (!folder.exists()){
+			folder.mkdirs();
+			return;
+		}
+		count = 0;
 		CONST.log.info(" merge begin: ");
 		Epub bk = new Epub();
-//		
-		File folder = new File("/tmp/txt");
-		count = 0;
 		mergeFolder(bk, folder);
 		
-//		File f1 = new File("/tmp", "10.epub");
+//		File f1 = new File(IOUtil.getTempFolder(), "10.epub");
 //		bk.readEpub(f1);
 //		bk.addString("test2.htm", "<html><body>Hello, world!</body></html>");
-//		File f2= new File("/tmp", "11.epub");
+//		File f2= new File(IOUtil.getTempFolder(), "11.epub");
 //		bk.addEpub(f2, "bk"+count);
 //
 //		// Ba Ba De You Xi Ge Ming ----Wan Chu Cong - Edu
 //		bk.addString("test3.htm", "<html><body>3</body></html>");
-//		bk.addEpub(new File("/tmp", "3.epub") );
+//		bk.addEpub(new File(IOUtil.getTempFolder(), "3.epub") );
 //		bk.addString("test4.htm", "<html><body>4</body></html>");
-//		bk.addEpub(new File("/tmp", "4.epub") );
+//		bk.addEpub(new File(IOUtil.getTempFolder(), "4.epub") );
 //		bk.addString("test5.htm", "<html><body>5</body></html>");
-//		bk.addEpub(new File("/tmp", "5.epub") );
+//		bk.addEpub(new File(IOUtil.getTempFolder(), "5.epub") );
 //		bk.addString("test6.htm", "<html><body>6</body></html>");
-//		bk.addEpub(new File("/tmp", "6.epub") );
+//		bk.addEpub(new File(IOUtil.getTempFolder(), "6.epub") );
 
-		bk.compact();
+//		bk.compact();
 
-		File outFile =  new File(CONST.tmp_folder, "test_merge.epub");
+		File outFile =  new File(IOUtil.getTempFolder(), "test_merge.epub");
 		bk.writeEpub(outFile);
 		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
@@ -230,6 +256,7 @@ public class EpubTest extends TestCase {
 					}
 					if (count == 0) {
 						bk.readEpub(f);
+//						bk.compact();
 					} else {
 						bk.addString("_test_"+count+ ".htm",name, "<html><body><h1>"+ name + "</h1></body></html>");
 						bk.addEpub(f, "bk"+String.format("%02d", count) );
@@ -243,14 +270,19 @@ public class EpubTest extends TestCase {
 
 	// @Test
 	public void _testPdf() throws Exception{
-		File folder = new File("/mnt/DOC/Book2/5 哲学");
+//		File folder = new File("/mnt/DOC/Book2/5 哲学");
 //		fixPdf(folder);
-		PdfHelper.pdf2txt("/tmp/r79-C.pdf");
+		String ss = PdfHelper.pdf2txt(IOUtil.getTempFolder()+"/p/ANSI_X12_850_purchase_order.pdf");
+		
+		CONST.log.debug(ss);
 //		gulong_list.htm
 		
-		File f1 = new File("/tmp", "r79-C.pdf" );
+		File f1 = new File(IOUtil.getTempFolder(), "r79-C.pdf" );
+		if (!f1.exists()){
+			return;
+		}
 //		PdfHelper.splitPDFFile(f1.getAbsolutePath(), 40);
-//		PdfHelper.removeBlankPdfPages(f1.getAbsolutePath(), "/tmp/bak.pdf");
+//		PdfHelper.removeBlankPdfPages(f1.getAbsolutePath(), "IOUtil.getTempFolder()/bak.pdf");
 //		PdfReader reader = new PdfReader(new FileInputStream(f1));
 		PdfReader reader = new PdfReader(new RandomAccessFileOrArray(f1.getAbsolutePath()), null);
 //		reader.consolidateNamedDestinations();
@@ -288,7 +320,7 @@ public class EpubTest extends TestCase {
 				// {Action=GoTo, Page=27 FitBH 484, Title=爵位名称的由来 Kids=array} 
 			}
 			CONST.log.info("[dd] " + title +" data :"+ bookmarks  );
-//			 f1.renameTo(new File("/tmp", f1.getName()+"."+title+".pdf"));
+//			 f1.renameTo(new File(IOUtil.getTempFolder(), f1.getName()+"."+title+".pdf"));
 			System.out.println("Bookmarks found and storing...");
 			return;
 		}else{
@@ -308,7 +340,7 @@ public class EpubTest extends TestCase {
             } else if ( type == PRTokeniser.TK_NUMBER ){
 				// out.write(val);
             } else {
-            	CONST.log.info("type {} " + type, val);
+            	CONST.log.info("type " + type + val);
             }
         }
         out.flush();
@@ -317,10 +349,14 @@ public class EpubTest extends TestCase {
         CONST.log.info("s  " + strTarget);
 	}
 //	@Test
-	public void _testImgExif() throws Exception {
+	public void testImgExif() throws Exception {
 		CONST.log.info("testImgExif B -----------------------------");
-		Exif e = new Exif("/mnt/DOC/Private/PanQing/2011");
-		File f = new File("/mnt/DOC/Private/new");
+		String base_folder = "/mnt/DOC/temp/IPAD/base"; 
+		// "/mnt/DOC/Private/PanQing/2013"
+		Exif e = new Exif(base_folder);
+		String temp_folder =  "/mnt/DOC/temp/IPAD/IBM";
+		// "/mnt/DOC/Private/PanQing/new";
+		File f = new File(temp_folder);
 		if (f.exists() && f.isDirectory()){
 //		e.dump(f);
 			e.organize(f);
@@ -350,12 +386,12 @@ public class EpubTest extends TestCase {
 		//<div id="content">  "div#content"
 		//<div class="content">  "div.content"
 		// http://www.accuitysolutions.com/en/Footer-Pages/Calendar-of-Holidays/
-		FileInputStream ins = new FileInputStream("r:/log/f/7612712.html");
-		Document doc = Jsoup.parse(ins, "gbk","");
-		String s11 = doc.select(cnt).first().html();
-		if (s11 != null){
-			CONST.log.debug(s11);
-		}
+		FileInputStream ins = new FileInputStream(new File(IOUtil.getTempFolder(), "2011.html"));
+		Document doc = Jsoup.parse(ins, "utf-8","");
+//		String s11 = doc.select(cnt).first().html();
+//		if (s11 != null){
+//			CONST.log.debug(s11);
+//		}
 		Elements items2 = doc.select("table");
 		CONST.log.info( "found " + items2.size() );
 		Elements items = doc.select("ul");
@@ -385,13 +421,14 @@ public class EpubTest extends TestCase {
 			CONST.log.info("v " + v);
 		}
 //		String s = doc.select(cnt).first().html();
-		String s = doc.body().html();
+		String s = doc.html();
 
 		Whitelist wl = new Whitelist();
-		wl.addTags("p","span");//
+		wl.addTags("html","head","body");
+		wl.addTags("p","h2");//,"span"
 		wl.addTags("img").addAttributes("img","src","alt");
 		cnt = Jsoup.clean(s, wl);
-		
+		cnt = cnt.replaceAll("(&nbsp;)", " ");
 		CONST.log.info(""+ cnt);
 	}
 	

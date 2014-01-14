@@ -73,6 +73,8 @@ public class Exif {
 				metadata = JpegMetadataReader.readMetadata(f);
 			} catch (Throwable e) {
 				CONST.log.error( "bad no meta: " +  f.getAbsolutePath());
+				
+				return -5;
 			}
 			if (metadata == null){
 				if (".avi".equalsIgnoreCase(ext)) {

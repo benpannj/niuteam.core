@@ -84,7 +84,7 @@ public class EpubUtil {
 		Epub bk = new Epub();
 		count = 100;
 		String title = folder.getName();
-		File tmp_folder = new File(CONST.tmp_folder+"/f", title);
+		File tmp_folder = new File(IOUtil.getTempFolder()+"/f", title);
 		if (tmp_folder.exists()) {
 			
 		} else {
@@ -96,7 +96,10 @@ public class EpubUtil {
 		bk.setMetadata(CONST.DCTags.meta, folder.getAbsolutePath() );
 //		bk.setMetadata(CONST.DCTags.meta, "Ben Pan  meta test 22");
 		addFolder(folder, bk, tmp_folder,"p_");
-		File outFile =  new File(CONST.tmp_folder, title+".epub");
+		File outFile =  new File(IOUtil.getTempFolder(), title+".epub");
+		if (outFile.exists()){
+			outFile =  new File(IOUtil.getTempFolder(), title+"."+System.currentTimeMillis()+".epub");
+		}
 		bk.writeEpub(outFile);
 //		bk.compact();
 //		checkEpub(outFile.getAbsolutePath());
@@ -118,26 +121,28 @@ public class EpubUtil {
 				count++;
 				continue;
 			}
-			String name = f.getName();
+			String name = f.getName().toLowerCase();
 			long len = f.length();
 			if (len < 10) continue;
 			String type = Resource.determineMediaType(name);
 			if (CONST.MIME.HTM.endsWith( type )) {
 //				int pos = name.lastIndexOf(".txt");
-				if (name.endsWith(".txt")){
+				boolean is_htm = name.endsWith(".htm") || name.endsWith(".html");
+				if (is_htm){
+//					XhtmlDoc doc = new XhtmlDoc(f, encoding);
+//					doc.analyzeTitle("<TITLE>", "</TITLE>", name.substring(0, name.length()-4));
+//					doc.analyzeContent("<TD CLASS=ART>", "<DIV class=FL>");
+//	//				doc.analyzeContent("<!--HTMLBUILERPART0-->", "<!--/HTMLBUILERPART0-->"); //"<blockquote>", "</blockquote>"
+//					File fout = new File(tmp_folder, prefix + name );
+//					doc.mergeTmpl(fout);
+//					bk.addItem(fout);
+					bk.addItem(f);
+				} else {
 					String id = "p" + count+"."+String.format("%03d", i);
 					TextResource res = new TextResource(id);
 					res.loadFile(f, encoding, id);
 					bk.addResource(res);
 //					continue;
-				} else {
-					XhtmlDoc doc = new XhtmlDoc(f, encoding);
-				doc.analyzeTitle("<TITLE>", "</TITLE>", name.substring(0, name.length()-4));
-				doc.analyzeContent("<TD CLASS=ART>", "<DIV class=FL>");
-//				doc.analyzeContent("<!--HTMLBUILERPART0-->", "<!--/HTMLBUILERPART0-->"); //"<blockquote>", "</blockquote>"
-				File fout = new File(tmp_folder, prefix + name );
-				doc.mergeTmpl(fout);
-				bk.addItem(fout);
 				}
 			} else if (CONST.MIME.CSS.equals(type)){
 			} else if (CONST.MIME.PNG.equals(type) || CONST.MIME.GIF.equals(type) || CONST.MIME.JPG.equals(type)){
@@ -151,7 +156,7 @@ public class EpubUtil {
 	// merge epub from web url
 	public void web2epub(String site, String title, int page) throws Exception {
 		Epub bk = new Epub();
-		File tmp_folder = new File(CONST.tmp_folder+"/f", title);
+		File tmp_folder = new File(IOUtil.getTempFolder()+"/f", title);
 		if (tmp_folder.exists()) {
 			
 		} else {
@@ -201,17 +206,23 @@ public class EpubUtil {
 			}
 		}
 		
-		File outFile =  new File(CONST.tmp_folder, title+".epub");
+		File outFile =  new File(IOUtil.getTempFolder(), title+".epub");
 		bk.writeEpub(outFile);
 //		checkEpub(outFile.getAbsolutePath());
 		CONST.log.info(" E --"+ outFile.getAbsolutePath());
 	}
 	public void file2epub( File folder) throws Exception {
-		File tmp_folder = new File(CONST.tmp_folder+"/f");
+		File tmp_folder = new File(IOUtil.getTempFolder()+"/f");
 		if (tmp_folder.exists()) {
 			
 		} else {
 			tmp_folder.mkdirs();
+		}
+		File dest_folder = new File(IOUtil.getTempFolder(),"dest");
+		if (dest_folder.exists() && dest_folder.isDirectory()) {
+			
+		} else {
+			dest_folder.mkdirs();
 		}
 
 		File[] files = folder.listFiles();
@@ -249,7 +260,8 @@ public class EpubUtil {
 				bk.addItem(f);
 				CONST.log.info("unknown: " + name);
 			}
-			File outFile =  new File(CONST.tmp_folder, title+".epub");
+			
+			File outFile =  new File(dest_folder, title+".epub");
 			bk.writeEpub(outFile);
 //			bk.compact();
 //			checkEpub(outFile.getAbsolutePath());

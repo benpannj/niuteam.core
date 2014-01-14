@@ -32,7 +32,8 @@ public abstract class Resource {
 	public void setHref(String s) {
 		this.href = s;
 	}
-	public static String determineMediaType(String href){
+	public static String determineMediaType(String file){
+		String href = file.toLowerCase();
 		if (href.endsWith(".png")) {
 			return CONST.MIME.PNG;
 		} else if (href.endsWith(".gif")){
@@ -41,8 +42,11 @@ public abstract class Resource {
 			return CONST.MIME.JPG;
 		} else if (href.endsWith(".css")){
 			return CONST.MIME.CSS;
+		} else if (href.endsWith(".txt") || href.endsWith(".html")  || href.endsWith(".htm")){
+			return CONST.MIME.HTM;
+		}else {
+			CONST.log.info("check type file: ---  "+ href );
 		}
-		CONST.log.info("check type file: --- {} ", href );
 		return CONST.MIME.HTM;
 	}
 
@@ -260,8 +264,8 @@ public abstract class Resource {
 		if (elms_l.size() > 0){
 			innerMergeSameTitle(elms_l);
 		}
-		// elms_l = doc_l.select("p");
-		// cleanElms(elms_l);
+		elms_l = doc_l.select("p");
+		cleanElms(elms_l);
 
 		String s = XhtmlDoc.cleanHtml(doc_l.html());
 		
@@ -285,16 +289,22 @@ public abstract class Resource {
 	}	
 
 	private String cleanElms(Elements elms_l) {
-		String[] bad_ss = new String[]{"大中华文化知识宝库","一 中华·民族","二 地理·资源","二 地理·资原","三 政治·党派","四 王朝·职官","五 司法·军事","六 经济·货币"
-			,"七 商业·外贸","八 农林·牧渔","九 交通·邮政","十 科技·医药","十一 教育·人才","十二 图书·报刊","十三 思想·伦理","十四 宗教·神祇","十五 语言·文字"
-			,"十六 文学·戏曲","十七 乐舞·书画","十八 文物·工艺","十九 名胜·名城","二十 建筑·园林","二十一 岁时·节庆","二十二 风俗·礼仪","二十三 人口·姓名"
-			,"二十四 称谓·亲属","二十五 婚姻·丧葬","二十六 服饰·饮食","二十七 日用·收藏","二十八 体育·读书"	
+		String[] bad_ss = new String[]{
+//			"大中华文化知识宝库","一 中华·民族","二 地理·资源","二 地理·资原","三 政治·党派","四 王朝·职官","五 司法·军事","六 经济·货币"
+//			,"七 商业·外贸","八 农林·牧渔","九 交通·邮政","十 科技·医药","十一 教育·人才","十二 图书·报刊","十三 思想·伦理","十四 宗教·神祇","十五 语言·文字"
+//			,"十六 文学·戏曲","十七 乐舞·书画","十八 文物·工艺","十九 名胜·名城","二十 建筑·园林","二十一 岁时·节庆","二十二 风俗·礼仪","二十三 人口·姓名"
+//			,"二十四 称谓·亲属","二十五 婚姻·丧葬","二十六 服饰·饮食","二十七 日用·收藏","二十八 体育·读书"	
 		};
 		String title_l = null;
 		StringBuilder buf = new StringBuilder();
 		Element elm = null;
+		Element elm_last = null; 
 		for (Element elm_l : elms_l){
 			title_l = elm_l.text().trim();
+			if (title_l.length() == 0){
+				elm_l.remove(); continue;
+			}
+			// remove bad string in text.
 			for (String bad_str : bad_ss) {
 				int pos = title_l.indexOf(bad_str);
 				if (pos < 1) continue;
@@ -312,9 +322,36 @@ public abstract class Resource {
 					buf.append( s ).append(" ");
 				}
 			}
+			// concat param
+			char c = title_l.charAt(title_l.length()-1);
+			boolean is_end = c =='。' || c=='！' || c=='」' || c=='”';
+			boolean is_title = title_l.length()<10 && !title_l.contains("，") && !title_l.contains("。");
+			if (is_title){
+				if (buf.length() > 0){
+					buf.append("---").append(title_l);
+					elm_l.text( buf.toString());
+				}
+				buf.setLength(0);
+				elm_last = elm_l;
+				continue;
+			} else if (is_end){
+				buf.append(title_l);
+				elm_l.text( buf.toString());
+				buf.setLength(0);
+				elm_last = elm_l;
+				// end 
+			} else {
+				buf.append(title_l);
+				elm_l.remove();
+			}
 		}
 		if (buf.length() > 2){
-			CONST.log.info(" .. "+ buf.toString());
+			if (elm_last != null){
+				buf.insert(0, elm_last.text());
+				elm_last.text( buf.toString());
+			} else {
+				CONST.log.info(" .. "+ buf.toString());
+			}
 		}
 		return buf.toString();
 	}

@@ -28,6 +28,17 @@ p {
 	line-height:120%;
 	margin-bottom:0.8em;
 }
+a:hover {cursor: hand; cursor: pointer;
+    color: #ff0000;
+    background-color: inherit;
+}
+table{
+	vertical-align:center;
+	border-collapse:collapse;
+}
+td {background-color:#EAF2D3;
+	border:1px solid #98bf21;
+}
 .yellow {background:yellow;}
 .box {
 	margin-left: 1em;

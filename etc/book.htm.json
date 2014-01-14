@@ -18,8 +18,11 @@ web:[
    ,"http://www.onlylz.com/postcache/1hvit/page.html"
    ,"http://www.onlylz.com/postcache/1hvit/page-[2-17].html"]
    ,last_dt:1351388700000,filter:".html",ext:"false",cnt:"div#content"}
- ,{id:"onlylz",title:"onlylzg"
+ ,{id:"",title:"onlylzg"
    ,url:["http://www.onlylz.com/postcache/32je/page.html"
-   ,"http://www.onlylz.com/postcache/32je/page-[2-700].html"]wsswswxzx
+   ,"http://www.onlylz.com/postcache/32je/page-[2-700].html"]
    ,last_dt:1351388700000,filter:".html",ext:"false",cnt:"div#content"}   
+ ,{id:"unixkoan",title:"unixkoan"
+   ,url:"http://i.linuxtoy.org/docs/guide/index.html"
+   ,last_dt:0,filter:".html",ext:"true",cnt:"",index:"div.toc"}   
  ]}

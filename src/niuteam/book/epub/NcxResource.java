@@ -21,7 +21,7 @@ public class NcxResource {
 		Element elmNcx = doc.getDocumentElement();
 		String ns = elmNcx.getNamespaceURI();
 		if (!CONST.NS_NCX.equals(ns)){
-			CONST.log.info("bad name space!: {} ", ns);
+			CONST.log.info("bad name space!:  "+ ns);
 			elmNcx.setAttribute("xmlns", CONST.NS_NCX);
 			if (elmNcx.hasAttribute("mlns")){
 				elmNcx.removeAttribute("mlns");

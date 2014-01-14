@@ -1,15 +1,16 @@
 package niuteam.book.core;
 
+import org.apache.log4j.Logger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public interface CONST {
-	public static final Logger log = LoggerFactory.getLogger(CONST.class);
-	String tmp_folder = "/tmp/log";
+	Logger log = Logger.getLogger(CONST.class);
+//	public static final Logger log = LoggerFactory.getLogger(CONST.class);
+//	String tmp_folder = "/tmp/log";
 	String EPUBLIB_GENERATOR_NAME = "niut v201110";
 
-	int HUGE_SIZE = 199000; // 699000
+	int HUGE_SIZE = 299000; // 699000
 	int TINY_SIZE =  40000;
 
 	String ENCODING = "UTF-8";

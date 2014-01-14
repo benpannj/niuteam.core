@@ -29,7 +29,7 @@ public class TextResource extends Resource{
 		title = name.substring(0, name.length()-4);
 		
 		String f_name = getId() +".htm" ;
-		this.f = new File(CONST.tmp_folder+File.separator+"f", f_name);
+		this.f = new File(IOUtil.getTempFolder()+File.separator+"f", f_name);
 		href = "Text/" + f_name;
 		
 		// 
@@ -111,7 +111,7 @@ public class TextResource extends Resource{
 					rest.append(line_t);
 					StringBuilder line_bf = new StringBuilder();
 					// EDIT 3: skip 3, change to 1 at 20121221
-					for (int i = 0; i < 4; i++){
+					for (int i = 0; i < 3; i++){
 						// skip next 3 line for book
 						line = in.readLine();
 						if (line ==null){
@@ -125,8 +125,15 @@ public class TextResource extends Resource{
 						}
 					}
 					boolean s_chk = checkNumber(line_bf, true);
-					if (s_chk){
+					if (s_chk ){
+						boolean istxt = line_bf.indexOf("，") >0;
+						if (istxt){
+							sb.append(line_bf);
+							sb.append("</p>").append("<p>");
+						} else {
+//							CONST.log.info(""+ line_bf );
 						rest.append(line_bf);
+						}
 					}else{
 //						rest.append(line_bf);
 						sb.append(line_bf);
@@ -156,6 +163,7 @@ public class TextResource extends Resource{
 				StringBuilder line_bf = new StringBuilder(line_t);
 				checkNumber(line_bf, false);
 				sb.append(line_bf);
+//				sb.append(" ");
 
 //				sb.append(line_t);
 				if (line_t.endsWith(end)||line_t.endsWith("”") ||line_t.endsWith("！") || cur_len >1024) {

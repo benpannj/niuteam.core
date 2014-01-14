@@ -89,7 +89,7 @@ public final class OpfResource {
 		Element elmPkg = this.docOpf.getDocumentElement();
 		String ns = elmPkg.getNamespaceURI();
 		if (!CONST.NS_OPF.equals(ns)){
-			CONST.log.info("bad name space!: {} ", ns);
+			CONST.log.info("bad name space!:  "+ ns);
 			if (elmPkg.hasAttribute("mlns")){
 				elmPkg.removeAttribute("mlns");
 			}
@@ -101,7 +101,7 @@ public final class OpfResource {
 			elmPkg = this.docOpf.getDocumentElement();
 			ns = elmPkg.getNamespaceURI();
 			if (!CONST.NS_OPF.equals(ns)){
-				CONST.log.info("still bad name space!: {} ", sss);
+				CONST.log.info("still bad name space!:  "+ sss);
 				int pos2 = sss.indexOf("package xmlns=\"\"");
 				if (pos2!=-1){
 					pos2 += "package xmlns=\"\"".length()-1;
@@ -109,7 +109,7 @@ public final class OpfResource {
 					this.docOpf = XmlUtil.string2Document(new_s);
 					elmPkg = this.docOpf.getDocumentElement();
 					ns = elmPkg.getNamespaceURI();
-					CONST.log.info("final bad name space!: {} ", ns);
+					CONST.log.info("final bad name space!: "+ ns);
 				}
 			}
 			} catch (Exception e){
@@ -160,7 +160,7 @@ public final class OpfResource {
 					meta_id = true;
 					String s = elm.getAttributeNS("", "id"); // CONST.NAMESPACE_OPF
 					if (!bkid_name.equals(s)){
-						CONST.log.info("meta:  id  - {}, {}", s, bkid_name );
+						CONST.log.info("meta:  id  - "+s+", "+ bkid_name );
 						elm.setAttribute("id", bkid_name);
 						dirty = true;
 					}
@@ -197,7 +197,7 @@ public final class OpfResource {
 			Element elm = (Element)nd;
 			String key = elm.getLocalName();
 			if (!"item".equals(key)){
-				CONST.log.warn(" not item ? {}", key);
+				CONST.log.warn(" not item ? "+ key);
 			}
 			String type = elm.getAttribute("media-type");
 			String item_href = elm.getAttribute("href");
@@ -226,7 +226,7 @@ public final class OpfResource {
 				dirty = true;
 				continue;
 			}else if (l.contains(item_href)){
-				CONST.log.info("remove item:  {}  - {}",id , item_href );
+				CONST.log.info("remove item:  "+id+"  - "+ item_href );
 //				elm.setAttribute("href", "");
 				elm.removeAttribute("href");
 				elmRemove = elm;
@@ -275,7 +275,7 @@ public final class OpfResource {
 				Element elm = (Element)nd;
 				String key = elm.getLocalName();
 				if (!"itemref".equals(key)){
-					CONST.log.warn(" not itemref ? {} ", key);
+					CONST.log.warn(" not itemref ?  "+ key);
 				}
 				// String idref = elm.getAttribute("idref");
 				// CONST.log.info("item:  {} ",  idref );
@@ -366,11 +366,11 @@ public final class OpfResource {
 			Element elm = (Element)nd;
 			String key = elm.getLocalName();
 			if (!"item".equals(key)){
-				CONST.log.warn(" not item ? {}", key);
+				CONST.log.warn(" not item ? "+ key);
 				continue;
 			}
 			if (!elm.hasAttribute("href")){
-				CONST.log.warn(" not item  href ? {}", key);
+				CONST.log.warn(" not item  href ? "+ key);
 				continue;
 				
 			}
@@ -406,12 +406,12 @@ public final class OpfResource {
 				resultStream.putNextEntry(ze);
 				IOUtil.copy(ins, resultStream);
 				} catch (Exception e) {
-					CONST.log.info("BAD write item  {}, {}", id, item_href);
+					CONST.log.error("BAD write item  "+id+", "+ item_href +","+ e.getMessage());
 					
 				}
 				ins.close();
 			} else {
-				CONST.log.info("empty ins!  item:  {}  - {}", type, item_href );
+				CONST.log.info("empty ins!  item:  "+type+"  - "+ item_href );
 			}
 		}
 	}
@@ -428,7 +428,7 @@ public final class OpfResource {
 			String id = elm.getAttribute("idref");
 			if ("itemref".equals(key) && id != null && id.length()>1){
 			} else {
-				CONST.log.warn(" not itemref ? {}", key);
+				CONST.log.warn(" not itemref ? "+ key);
 				l.add(elm);
 				continue;
 			}
@@ -445,8 +445,7 @@ public final class OpfResource {
 					ZipEntryResource zres = (ZipEntryResource)res;
 					zres.clean();
 					size = zres.getSize();
-				}
-				if (res instanceof StringResource){
+				}else if (res instanceof StringResource){
 					prev_res = null;
 					continue;
 				}
@@ -457,7 +456,7 @@ public final class OpfResource {
 						i++;
 					
 						String href = res.getId()+"_"+String.format("%03d", i)+".htm";
-						CONST.log.info("huge size " + href);
+						CONST.log.info("huge size " + href + ", " + size);
 						StringResource res_s = new StringResource(href, null);
 						res_s.loadString(s);
 						addItem(res_s);

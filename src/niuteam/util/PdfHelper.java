@@ -379,10 +379,10 @@ public class PdfHelper {
 //	        out.flush();
 //	        out.close();
 //	    }	 
-	public static void pdf2txt(String pdfSourceFile)
-    {
+	public static String pdf2txt(String pdfSourceFile){
+		StringBuilder buf = new StringBuilder(300);
 //		int blankPdfsize = 100;
-		String encoding = "gbk";
+//		String encoding = "gbk";
         try
         {
             // step 1: create new reader
@@ -401,8 +401,9 @@ public class PdfHelper {
         	 // PdfReaderContentParser
             for (int i=1;i<=r.getNumberOfPages();i++)
             {
-            	String myLine = p.getTextFromPage(i);
-            	CONST.log.info(" "+ myLine );
+            	String page = p.getTextFromPage(i);
+//            	CONST.log.info(" "+ page );
+            	buf.append(page);
                 //get the page content
 //                byte bContent [] = r.getPageContent(i,raf);
 //                ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -417,10 +418,9 @@ public class PdfHelper {
             //close everything
             raf.close();
             r.close();
-        }
-        catch(Exception e)
-        {
+        }catch(Exception e){
         //do what you need here
         }
+        return buf.toString();
     }	
 }

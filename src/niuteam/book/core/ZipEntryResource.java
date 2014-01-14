@@ -94,7 +94,7 @@ public class ZipEntryResource extends Resource{
 //		} else {
 //			folder.mkdirs();
 //		}
-		f = new File(CONST.tmp_folder+File.separator+"f", this.href);
+		f = new File(IOUtil.getTempFolder()+File.separator+"f", this.href);
 		File folder = f.getParentFile();
 		if (!folder.exists()){
 			folder.mkdirs();
@@ -105,7 +105,7 @@ public class ZipEntryResource extends Resource{
 		fos.flush();
 	}
 	public void replaceCss() throws Exception {
-		f = new File(CONST.tmp_folder+File.separator+"f", this.href);
+		f = new File(IOUtil.getTempFolder()+File.separator+"f", this.href);
 		File folder = f.getParentFile();
 		if (!folder.exists()){
 			folder.mkdirs();
