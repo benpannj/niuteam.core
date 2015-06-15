@@ -29,9 +29,18 @@
       id:"songshuhui",
       title:"科学松鼠会",
       url:"http://songshuhui.net/feed",
-      last_dt:1384636110000,
+      last_dt:1431486969000,
       filter:"",
       ext:"false"
+    },
+    {
+      id:"chan",
+      title:"Chan",
+      url:"http://blog.sina.com.cn/rss/1215172700.xml",
+      last_dt:1223601876000,
+      filter:".html",
+      ext:"true",
+      cnt:"div.articalContent"
     },
     {
       id:"lichengpeng",
@@ -46,7 +55,7 @@
       id:"wangxiaoxing",
       title:"相对美女私房菜",
       url:"http://blog.sina.com.cn/rss/wangxiaoxing.xml",
-      last_dt:1384736466000,
+      last_dt:1394428086000,
       filter:".html",
       ext:"true",
       cnt:"div.articalContent"
@@ -56,7 +65,7 @@
       id:"jobbole",
       title:"伯乐在线",
       url:"http://blog.jobbole.com/feed",
-      last_dt:1384705825000,
+      last_dt:1431666250000,
       filter:".html",
       ext:"true",
       cnt:"div#storyBody"
@@ -65,7 +74,7 @@
       id:"36kr",
       title:"36氪",
       url:"http://www.36kr.com/feed",
-      last_dt:1384734515000,
+      last_dt:1431838123000,
       filter:".html",
       ext:"true",
       cnt:"div.mainContent"
@@ -74,7 +83,7 @@
       id:"blogjava",
       title:"BlogJava-首页技术区",
       url:"http://www.blogjava.net/rss.aspx",
-      last_dt:1384644720000,
+      last_dt:1431540540000,
       filter:".html",
       ext:"true",
       cnt:"div.post"
@@ -87,17 +96,17 @@
       filter:".html",
       ext:"true",
       cnt:"div#storyBody"
-    },
+    }
+,
     {
       id:"coolshell",
       title:"酷壳 - CoolShell.cn",
       url:"http://coolshell.cn/feed",
-      last_dt:1384273305000,
+      last_dt:1429203837000,
       filter:".html",
       ext:"true",
       cnt:"div#storyBody"
-    }
-,
+    },
     {
       id:"ruanyifeng",
       title:"阮一峰的网络日志",
@@ -134,18 +143,18 @@
       filter:".html",
       ext:"true",
       cnt:"div#storyBody"
-    },
+    }
+,
     {
       id:"matrix67",
       title:"matrix67 数学笔记",
       url:"http://www.matrix67.com/blog/feed.asp",
-      last_dt:1382672934000,
+      last_dt:1431465085000,
       filter:".html",
       ext:"true",
       img:".png",
       cnt:"div#storyBody"
-    }
-,
+    },
     {
       id:"archlinux",
       title:"ArchLinux News",

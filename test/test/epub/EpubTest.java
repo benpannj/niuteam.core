@@ -2,6 +2,7 @@ package test.epub;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -14,11 +15,14 @@ import junit.framework.TestCase;
 import niuteam.book.core.CONST;
 import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
+import niuteam.rss.BlogSpinner;
 import niuteam.rss.RssSpinner;
+import niuteam.util.DocxHelper;
 import niuteam.util.EpubUtil;
 import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
 
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -144,8 +148,8 @@ public class EpubTest extends TestCase {
 		}
 		EpubUtil util = new EpubUtil();
 //		util.setEncoding("gbk");
-		util.folder2epub(folder);
-//		util.file2epub(folder);
+//		util.folder2epub(folder);
+		util.file2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -349,7 +353,7 @@ public class EpubTest extends TestCase {
         CONST.log.info("s  " + strTarget);
 	}
 //	@Test
-	public void testImgExif() throws Exception {
+	public void _testImgExif() throws Exception {
 		CONST.log.info("testImgExif B -----------------------------");
 		String base_folder = "/mnt/DOC/temp/IPAD/base"; 
 		// "/mnt/DOC/Private/PanQing/2013"
@@ -374,12 +378,15 @@ public class EpubTest extends TestCase {
 		WebEpub e = new WebEpub();
 		e.createFromWeiphone();
 	}
-	public void _testRssEpub()  throws Exception {
-		RssSpinner e = new RssSpinner();
-		e.rss2epub();
+	public void testRssEpub()  throws Exception {
+//		RssSpinner e = new RssSpinner();
+//		e.rss2epub();
 
 //		WebPageSpinner e = new WebPageSpinner();
 //		e.webpage2epub();
+		
+		BlogSpinner e = new BlogSpinner();
+		e.rss2epub();
 	}
 	public void _testJsoup() throws Exception{
 		String cnt = "div#content";
@@ -431,5 +438,83 @@ public class EpubTest extends TestCase {
 		cnt = cnt.replaceAll("(&nbsp;)", " ");
 		CONST.log.info(""+ cnt);
 	}
-	
+	public void _testDocx() throws Exception {
+		DocxHelper d = new DocxHelper();
+		d.toPdf();
+	}
+	public void _testIbmMqCode() throws Exception {
+		JSONObject root = new JSONObject();
+		String encoding = "utf-8";
+		String site = "http://www-01.ibm.com/support/knowledgecenter/api/content/SSFKSJ_7.5.0/com.ibm.mq.tro.doc/";
+		File fd_local = new File(IOUtil.getTempFolder(), "mq");
+		// http://www-01.ibm.com/support/knowledgecenter/api/content/SSFKSJ_7.5.0/com.ibm.mq.tro.doc/q040710_.htm
+		FileInputStream ins = new FileInputStream(new File(fd_local, "mq_reasoncode.html"));
+		Document doc = Jsoup.parse(ins, encoding,"");
+		Elements items = doc.select("a.xref");
+		int size = items.size();
+		for (int i = 0; i< size; i++){
+			Element elm = items.get(i);
+			String v = elm.text();
+			String[] ss = v.split(" ", 4);
+//			if (ss.length < 4){
+//				CONST.log.info("\r\n\r\n --- Code " + v);
+//				continue;
+//			}
+//			if (!v.startsWith("6106")){
+//				continue;
+//			}
+			String ref = elm.attr("href");
+			CONST.log.info("Code " + ss[0] +", " + ss[ss.length-1] +", " + ref);
+
+			File f = new File(fd_local, ref);
+			Document d_f;
+			if (!f.exists()){
+				String url = site + ref;
+				d_f = Jsoup.connect(url)
+						.userAgent("Opera/9.80 (X11; Linux x86_64; U; en) Presto/2.10.229 Version/11.61")
+						.header("Accept", "text/html")
+//						.data("wd", "Java")
+						  .timeout(15000)
+						  .get();
+				FileOutputStream output = new FileOutputStream(f);
+				byte[] bin = d_f.html().getBytes(encoding);
+				output.write(bin);
+				output.flush();
+				output.close();			
+			} else{
+				d_f = Jsoup.parse(f, encoding);
+			}		
+			JSONObject json = new JSONObject();
+			json.put("Code", ss[ss.length-1]);
+			Elements divs = d_f.select("div.section");
+			for (Iterator<Element> itor = divs.iterator(); itor.hasNext();){
+				Element div = itor.next();
+				Element e_h2 = div.select("h2").first();
+				String h2 = e_h2.text();
+				e_h2.remove();
+				String p = div.text(); // div.select("p").first().text();
+				if ("Completion Code".equalsIgnoreCase(h2)){
+//					"".equalsIgnoreCase(anotherString)
+//					CONST.log.debug("CompCode " + p);
+					json.put("CompCode", p);
+				}else if ("Programmer response".equalsIgnoreCase(h2)){
+//					CONST.log.debug("Resp " + p);
+					json.put("Resp", p);
+				}else if ("Explanation".equalsIgnoreCase(h2)){
+					json.put("Explan", p);
+//					CONST.log.debug("Explan " + p);
+				} else {
+					CONST.log.debug("Type " + h2);
+				}
+			}
+			root.put(ss[0], json);	
+		}
+//		json
+		File f = new File(fd_local, "mq_reasoncode.json");
+		FileOutputStream output = new FileOutputStream(f);
+		output.write(root.toString(2).getBytes());
+		output.flush();
+		output.close();
+		
+	}
 }
