@@ -1,0 +1,26 @@
+{
+  user:"Ben Pan",
+  mail:{
+    from:"ben.pan.nj@gmail.com",
+    to:"benpannj@duokan.com",
+    host:"mail.google.com"
+  },
+  rss:[
+    {
+      id:"chan",
+      title:"Chan",
+      url:"http://blog.sina.com.cn/chzhshch",
+      last_dt:0,
+      filter:".html",
+      ext:"true",
+      img:"*.*",
+      cnt:"div.articalContent"
+    },
+    {
+      id:"",
+      title:"ArchLinux News",
+      url:"https://www.archlinux.org/feeds/news/",
+      last_dt:-1
+    }
+  ]
+}
