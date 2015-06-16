@@ -22,6 +22,7 @@ import niuteam.util.DocxHelper;
 import niuteam.util.EpubUtil;
 import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
+import niuteam.util.WebSpinner;
 
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -380,6 +381,11 @@ public class EpubTest extends TestCase {
 		e.createFromWeiphone();
 	}
 	public void testRssEpub()  throws Exception {
+//		String url = "http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303";
+//		
+//		String s = WebSpinner.downZip(url);
+//		CONST.log.debug(s);
+		
 //		RssSpinner e = new RssSpinner();
 //		e.rss2epub();
 
@@ -390,15 +396,17 @@ public class EpubTest extends TestCase {
 //		e.rss2epub();
 
 		ZhihuSpinner e = new ZhihuSpinner();
-
-		FileInputStream ins = new FileInputStream(new File(IOUtil.getTempFolder(), "aaa.htm"));
+		e.init();
+//		File f = new File(IOUtil.getTempFolder(), "aaa.htm");
+//		if (!f.exists()) return;
+//		FileInputStream ins = new FileInputStream(f);
 //		byte[] b = IOUtil.toByteArray(ins);
 //		String r1 = e.analyzeZhuanlan(new String(b) );
 //		CONST.log.debug(r1);
 //		ins.close();
 		
-		Document doc = Jsoup.parse(ins, "utf-8","");
-		String r = e.analyzeZhuanlan(doc);
+//		Document doc = Jsoup.parse(ins, "utf-8","");
+		String r = e.downZhuanlan("agBJB");
 		CONST.log.debug(r);
 	}
 	public void _testJsoup() throws Exception{

@@ -8,7 +8,7 @@
 	<classpathentry kind="var" path="SHARED/lib/jsoup-1.6.1.jar"/>
 	<classpathentry kind="var" path="SHARED/lib/metadata-extractor.jar"/>
 	<classpathentry kind="var" path="SHARED/lib/xmpcore.jar"/>
-	<classpathentry kind="lib" path="/shared/cslib/org.json.jar"/>
-	<classpathentry kind="lib" path="/shared/lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="var" path="SHARED/lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="var" path="SHARED/lib/org.json.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

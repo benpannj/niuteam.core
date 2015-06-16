@@ -8,6 +8,8 @@ import java.io.Writer;
 
 import niuteam.book.core.CONST;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -239,5 +241,39 @@ public class WebSpinner {
 		output.flush();
 		output.close();
 	}
-	
+	public static JSONObject downJson(String url) throws Exception{
+		CONST.log.info("begin down: " + url);
+		Response request = Jsoup.connect(url).referrer(url)
+		.userAgent("Mozilla/5.0 (Windows NT 5.1; rv:2.0b6) Gecko/20100101 Firefox/4.0b6")
+		.execute();
+		
+		String type = request.contentType();
+		//byte[] imgdata = request.bodyAsBytes();
+		
+		String body = request.body();
+		if (type.contains("json")){
+			JSONObject json ;
+			if (body.charAt(0) == '['){
+				// this is array list
+				JSONArray ary = new JSONArray(body);
+				CONST.log.debug(" " + ary.toString(2));
+				json = ary.getJSONObject(0);
+			}else {
+			 json = new JSONObject(body);
+			}
+			CONST.log.debug(" " + json.toString(2));
+			return json;
+		} else {
+			CONST.log.debug(""+ type + "\n" + body);
+			return null;
+		}
+		
+//		File f = new File(IOUtil.getTempFolder(), "aaa.json");
+//		
+//		FileOutputStream output = new FileOutputStream(f);
+//		output.write(imgdata);
+//		output.flush();
+//		output.close();	
+		//return "";
+	}
 }

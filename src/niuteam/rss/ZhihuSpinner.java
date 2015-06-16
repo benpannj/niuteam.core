@@ -32,12 +32,13 @@ import org.jsoup.select.Elements;
 public class ZhihuSpinner {
 	private String user = "Ben Pan";
 	private Epub bk_all = new Epub();
+	private File tmp_folder;
 	private SimpleDateFormat fmt_yyyymmdd = null;
 	private SimpleDateFormat fmt_eeedmy = null;
 	private String yymmdd = null;
 	private int count = 0;
 
-	public void init(){
+	public void init()throws Exception{
 		Date date_now = new Date();
 		fmt_yyyymmdd = new SimpleDateFormat("yyyyMMdd");//HHmmss
 	    fmt_eeedmy = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
@@ -45,6 +46,12 @@ public class ZhihuSpinner {
 //		long now = date_now.getTime(); // System.currentTimeMillis();
 		yymmdd = fmt_yyyymmdd.format(date_now);
 		bk_all.create(yymmdd, user,"zh");
+		
+		tmp_folder = new File(IOUtil.getTempFolder()+"/f", yymmdd);
+		if (tmp_folder.exists()) {
+		} else {
+			tmp_folder.mkdirs();
+		}
 	}
 	// merge epub from web url
 	public void rss2epub() throws Exception {
@@ -331,7 +338,7 @@ public class ZhihuSpinner {
         // returing RSS url
         return rss_url;
     }
-    public String analyzeZhuanlan(Document doc){
+    public String analyzeZhuanlan(Document doc) throws Exception{
 //    	org.jsoup.nodes.Document doc = Jsoup.parse(cnt);
     	
     	Element elm_hdr = doc.select("header").first();
@@ -380,7 +387,7 @@ public class ZhihuSpinner {
 //		return doc.outerHtml();
 		return d_new.html();
 	}
-    private Element img(Element elm_img){
+    private Element img(Element elm_img) throws Exception{
     	
 		String img_src = elm_img.attr(elm_img.hasAttr("data-original")? "data-original":"src");
 		elm_img.removeAttr("class");
@@ -392,7 +399,7 @@ public class ZhihuSpinner {
 		}
 		
 		elm_img.attr("src", file_name);
-		CONST.log.info("skip img " + img_src);
+		//CONST.log.info("skip img " + img_src);
 		
 		//String file_name = img_src+".jpg";
 		
@@ -400,14 +407,14 @@ public class ZhihuSpinner {
 		
 //		fmt_yyyymmdd.format(dt_pub)+"."+"i"+String.format("%03d", count)
 //		if ("*.*".equals(filter_img) || file_name.endsWith(filter_img) ){
-//			File f_img = new File(tmp_folder, file_name);
+			File f_img = new File(tmp_folder, file_name);
 //			CONST.log.debug("img: " + f_img.getAbsolutePath() );
-//			if (!f_img.exists()) {
-//				WebSpinner.down(img_src, f_img);
-//			}
-//			elm_img.attr("src", file_name);
+			if (!f_img.exists()) {
+				WebSpinner.down(img_src, f_img);
+			}
+			elm_img.attr("src", file_name);
 //			bk.addItem(f_img);
-//			bk_all.addItem(f_img);
+			bk_all.addItem(f_img);
 //		}else{
 //			CONST.log.info("skip img " + img_src);
 //		}
@@ -432,4 +439,100 @@ public class ZhihuSpinner {
 //    	
 //    	return buf.toString();
 //    }
+	public String downZhuanlan(String name) throws Exception {
+		for (int i = 0; i < 100000; i++){
+			int size = downZhuanlan(name, i*10);
+			if (size == 0){
+				break;
+			}
+		}
+		File outFile =  new File(IOUtil.getTempFolder(), "ALL."+yymmdd+".epub");
+		if (outFile.exists()){
+			File destFile =  new File(IOUtil.getTempFolder(), "ALL."+yymmdd+System.currentTimeMillis()+".epub");
+			outFile.renameTo(destFile );
+		}
+		bk_all.writeEpub(outFile);
+		return outFile.getAbsolutePath();
+	}
+	public int downZhuanlan(String name, int offset) throws Exception {
+		int size = 0;
+		// http://zhuanlan.zhihu.com/api/columns/agBJB/posts
+		// http://zhuanlan.zhihu.com/api/columns/agBJB/posts?limit=10&offset=10
+		// http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303
+		String url = "http://zhuanlan.zhihu.com/api/columns/"+name+"/posts";
+		if (offset > 0){
+			url += "?limit=10&offset="+offset;
+		}
+		Response request = Jsoup.connect(url).referrer(url)
+		.userAgent("Mozilla/5.0 (Windows NT 5.1; rv:2.0b6) Gecko/20100101 Firefox/4.0b6")
+		.execute();
+		String body = request.body();
+		if (body.charAt(0)== '['){
+			// array 
+			JSONArray ary = new JSONArray(body);
+			size = ary.length();
+			for (int i = 0; i < size; i++){
+				JSONObject j = ary.getJSONObject(i);
+				String id = j.getString("slug");
+				String title = j.getString("title");
+				Document doc = new Document("");
+				doc.appendElement("h2").attr("id", id).appendText(title );
+				doc.appendElement("p").appendText( j.getString("publishedTime"));
+				String t_img = j.getString("titleImage");
+				if ( t_img!= null && t_img.length()> 2) {
+				Element img = doc.createElement("img").attr("src", t_img);
+				try {
+				img(img);
+				}catch(Exception e){
+					CONST.log.debug("ERR: "  + id + ", "+ title +","+ img.html() , e);
+				}
+				doc.appendElement("p").appendChild(img);
+				}
+				// or http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303
+				String cnt = j.getString("content");
+				int len = cnt.length();
+				int pos = 0;
+				int start = cnt.indexOf("<img");
+				int end = 0;
+				while (start != -1){
+					if (pos < start){
+						doc.appendElement("p").appendText( cnt.substring(pos, start ) );
+					}
+					end = cnt.indexOf('>', start);
+					String s_img = cnt.substring(start, end+1);
+					int i_org = s_img.indexOf("data-original=\"");
+					if (i_org > 0){
+						i_org += "data-original=\"".length();
+					} else{
+						i_org = s_img.indexOf("src=\"") + "src=\"".length();
+					}
+					int e_org = s_img.indexOf("\"", i_org);
+					if (e_org > i_org){
+//						CONST.log.debug("" + s_img);
+						String url_img = s_img.substring(i_org, e_org);
+						Element e_img = doc.createElement("img").attr("src",url_img);
+						img(e_img);
+						doc.appendElement("p").appendChild(e_img);
+					} else {
+						CONST.log.debug("" + s_img);
+					}
+					pos = end+1;
+					// next
+					start = cnt.indexOf("<img", pos);
+				}
+				if (pos <len){
+					doc.appendElement("p").appendText( cnt.substring(pos, len-1) );
+				}
+				// CONST.log.debug(doc.html() );
+				
+				bk_all.addString(id+".htm", title, doc.html());
+			}
+		} else {
+			CONST.log.debug(body);
+			size = 0;
+		}
+		//JSONObject j = WebSpinner.downJson(url);
+		
+		return size;
+	}
 }
