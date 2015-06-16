@@ -17,6 +17,7 @@ import niuteam.book.epub.Epub;
 import niuteam.image.Exif;
 import niuteam.rss.BlogSpinner;
 import niuteam.rss.RssSpinner;
+import niuteam.rss.ZhihuSpinner;
 import niuteam.util.DocxHelper;
 import niuteam.util.EpubUtil;
 import niuteam.util.IOUtil;
@@ -148,8 +149,8 @@ public class EpubTest extends TestCase {
 		}
 		EpubUtil util = new EpubUtil();
 //		util.setEncoding("gbk");
-//		util.folder2epub(folder);
-		util.file2epub(folder);
+		util.folder2epub(folder);
+//		util.file2epub(folder);
 //		File[] files = folder.listFiles();
 //		for (int i = 0; i < files.length; i++){
 //			File f = files[i];
@@ -385,8 +386,20 @@ public class EpubTest extends TestCase {
 //		WebPageSpinner e = new WebPageSpinner();
 //		e.webpage2epub();
 		
-		BlogSpinner e = new BlogSpinner();
-		e.rss2epub();
+//		BlogSpinner e = new BlogSpinner();
+//		e.rss2epub();
+
+		ZhihuSpinner e = new ZhihuSpinner();
+
+		FileInputStream ins = new FileInputStream(new File(IOUtil.getTempFolder(), "aaa.htm"));
+//		byte[] b = IOUtil.toByteArray(ins);
+//		String r1 = e.analyzeZhuanlan(new String(b) );
+//		CONST.log.debug(r1);
+//		ins.close();
+		
+		Document doc = Jsoup.parse(ins, "utf-8","");
+		String r = e.analyzeZhuanlan(doc);
+		CONST.log.debug(r);
 	}
 	public void _testJsoup() throws Exception{
 		String cnt = "div#content";

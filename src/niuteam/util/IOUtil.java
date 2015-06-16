@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Properties;
 
 /**
  * Most of the functions herein are re-implementations of the ones in apache io IOUtils.
@@ -15,7 +16,19 @@ import java.io.Writer;
 public class IOUtil {
 
 	public static final int IO_COPY_BUFFER_SIZE = 1024 * 4;
+	public static void initEnv(){
+   		Properties prop = new Properties();
+		prop.setProperty("log4j.rootLogger", "debug, stdout");
+		prop.setProperty("log4j.appender.stdout", "org.apache.log4j.ConsoleAppender");
+		prop.setProperty("log4j.appender.stdout.layout", "org.apache.log4j.PatternLayout");
+		String pat = 
+//				"%-5p %d{ISO8601} (%C:%L) (%F:%L) %M %x - %m\n";
+		 "%5p (%F:%L) %M() - %m%n";
+		prop.setProperty("log4j.appender.stdout.layout.ConversionPattern", pat);
 
+				
+		org.apache.log4j.PropertyConfigurator.configure(prop);		
+	}
 	/**
 	 * Gets the contents of the Reader as a byte[], with the given character encoding.
 	 * 

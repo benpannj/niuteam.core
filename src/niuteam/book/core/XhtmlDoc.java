@@ -38,6 +38,43 @@ public class XhtmlDoc {
 		IOUtil.copy(new InputStreamReader(new FileInputStream(f), encoding), out );
 		html = out.toString();
 	}
+	public void removeDup222(File fout)throws Exception{
+		StringBuilder buf = new StringBuilder(html);
+		int pos = buf.indexOf("<p>");
+		int cur = 0;
+		while (pos > 0){
+			char c = buf.charAt(pos);
+			cur = -1;
+			pos++;
+			char n = buf.charAt(pos);
+			while (n!='<'){
+				if (n==c){
+					buf.deleteCharAt(pos-1);
+				}else{
+					pos++;
+				}
+				c = n;
+				n = buf.charAt(pos);
+			}
+			cur = pos;
+			pos = buf.indexOf("<p>", pos);
+			// merge para
+			if (c == '。' || c == '”' || c == '！' || pos -cur >10){
+				// end.
+				pos+=3;
+			} else if (pos >0){
+				CONST.log.debug("del " + buf.substring(cur, pos+3) + (pos -cur));
+				buf.delete(cur, pos+3);
+				pos = cur;
+			} else {
+				// pos < 0 , return
+			}			
+		}
+		Writer fwu = new OutputStreamWriter(new FileOutputStream(fout), "utf-8");
+		fwu.write(buf.toString() );
+		fwu.flush();
+		fwu.close();
+	}
 	public void mergeTmpl(File fout) throws Exception{
 		InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
 		StringWriter out2 = new StringWriter();
@@ -71,6 +108,10 @@ public class XhtmlDoc {
 		fwu.write(html);
 		fwu.flush();
 		fwu.close();
+	}
+	public void analyzeTxt222(String t){
+		title = t;
+		//content = txt2htm(html, title);
 	}
 	public void analyzeTitle(String open, String close, String df){
 		title = getStringBetween(html, open, close);
@@ -166,7 +207,55 @@ public class XhtmlDoc {
 		}
 		return "";
 	}
-
+	public static String txt2htm2222(String s, String tl) {
+		if (s == null) return null;
+		int l_t = tl==null? 0: tl.length();
+		StringBuilder sb = new StringBuilder(4096);
+		StringBuilder rest = new StringBuilder(4096);
+		BufferedReader in = new BufferedReader(new StringReader(s) );
+		String line;
+		sb.append("<p>");
+		rest.append("<p>");
+		try {
+			int cur_len = 0;
+			while ((line = in.readLine()) != null) {
+				String line_t = line.trim();
+				int l = line_t.length();
+				if (l == 0) continue;
+				if (line_t.startsWith("----") && line_t.endsWith("----")){
+					rest.append("<div>");
+					rest.append(line_t);
+					for (int i = 0; i < 3; i++){
+						// skip next 3 line for book
+						line = in.readLine();
+						rest.append(line);
+					}
+					rest.append("</div>");
+					continue;
+				}
+				if (l_t>0 && line_t.contains(tl) && (l-l_t>0 && l-l_t <6)){
+					rest.append("<div>").append(line_t).append("</div>");
+					continue;
+				}
+				cur_len += l;
+				String end = "。";
+				sb.append(line_t);
+				if (line_t.endsWith(end)||line_t.endsWith("”") ||line_t.endsWith("！") || cur_len >1024) {
+					sb.append("</p>").append("<p>");
+					cur_len = 0;
+				}
+			}
+			sb.append("</p>");
+			in.close();
+			rest.append("</p>");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		sb.append(rest);
+//		System.out.println(urlStr);
+		return sb.toString().trim();
+	}
 //	public static void cleanHtml(StringBuffer buf, String[] keep, String rpl){
 //		if (buf == null || keep == null) return;
 //		int pos = 0;
@@ -435,6 +524,53 @@ public class XhtmlDoc {
 
 	}
 	
-
-
+	public static List<String> split2222(File f) throws Exception {
+		String temp;
+		String encoding = "utf-8";
+		StringWriter out = new StringWriter();
+		IOUtil.copy(new InputStreamReader(new FileInputStream(f), encoding), out );
+		String html = out.toString();
+		
+		html = XhtmlDoc.cleanHtml(html);
+		int start = 0, end = 0;
+		int offset = 100000;
+		boolean more = true;
+		int len = html.length();
+		Writer fwu = new OutputStreamWriter(new FileOutputStream(f), "utf-8");
+		end = html.indexOf("</p>", start+offset);
+		if (end != -1 && len-end >1000){
+			temp = html.substring(start, end+4);
+			fwu.write(temp);
+			fwu.write("</body></html>");
+			more = true;
+		} else {
+//			temp = html.substring(start);
+			fwu.write(html);
+			more = false;
+		}
+		fwu.flush();
+		fwu.close();
+		StringBuffer buf = new StringBuffer();
+		List<String> list = new ArrayList<String>();
+		while (more){
+			buf.append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>");
+			buf.append("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><title></title>")
+			.append("<link href=\"../Styles/main.css\" rel=\"stylesheet\" type=\"text/css\" />")
+			.append("</head><body>");
+			start = end+4;
+			end = html.indexOf("</p>", start+offset);
+			if (end != -1 && len-end >1000){
+				buf.append( html.substring(start, end+4)).append("</body></html>");
+				more = true;
+			} else {
+				buf.append(html.substring(start));
+				more = false;
+			}
+			list.add(buf.toString());
+			buf.setLength(0);
+		}
+		return list;
+		
+		
+	}	
 }
