@@ -376,11 +376,12 @@ public class EpubTest extends TestCase {
 		CONST.log.info("testImgExif E -----------------------------");
 	}
 //	@Test
-	public void _testWebWpub()  throws Exception {
+	public void testWebWpub()  throws Exception {
 		WebEpub e = new WebEpub();
-		e.createFromWeiphone();
+//		e.createFromWeiphone();
+		e.chanlun();
 	}
-	public void testRssEpub()  throws Exception {
+	public void _testRssEpub()  throws Exception {
 //		String url = "http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303";
 //		
 //		String s = WebSpinner.downZip(url);
