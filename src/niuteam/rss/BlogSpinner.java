@@ -46,7 +46,7 @@ public class BlogSpinner {
 		bk_all.create(yymmdd, user,"zh");
 	}
 	// merge epub from web url
-	public void rss2epub() throws Exception {
+	public void blog2epub() throws Exception {
 		File f = new File("etc/book.blog.json");
 		if (!f.exists()){
 			CONST.log.error("no conf: " + f.getAbsolutePath());
@@ -73,9 +73,9 @@ public class BlogSpinner {
 //				if (!"blogjava".equals(id)){
 //					continue;
 //				}
-				bk_all.addString(id+".htm", title, "<p>"+title+ ", " + url+"</p>");
+				bk_all.addString(id, title, "<p>"+title+ ", " + url+"</p>");
 				// build rss book
-				long last_dt = readRss(url, id, title, old_last_dt, j);
+				long last_dt = readBlog(url, id, title, old_last_dt, j);
 				// check update date
 				if (last_dt > old_last_dt){
 					j.put("last_dt", Long.valueOf(last_dt));
@@ -99,7 +99,7 @@ public class BlogSpinner {
 			
 		}
 	}	
-	public long readRss(String url,String id, String title, long last_dt, JSONObject json_config) throws Exception{
+	public long readBlog(String url,String id, String title, long last_dt, JSONObject json_config) throws Exception{
 		File tmp_folder = new File(IOUtil.getTempFolder()+"/f", id);
 		if (tmp_folder.exists()) {
 		} else {
@@ -125,7 +125,9 @@ public class BlogSpinner {
 //				.data("wd", "Java")
 				  .timeout(15000)
 		.get();
-		Element elm_link = doc.select(".bloglist").first().select("a[href]").first();
+		String div_list = "div.articleList";
+		// ".bloglist"
+		Element elm_link = doc.select(div_list).first().select("a[href]").first();
 		String href0 = elm_link.attr("href");
 		json_config.put("nexturl", href0);
 		//json_config.put("nexttl", elm_link.text());
@@ -157,21 +159,27 @@ public class BlogSpinner {
 		    
 			if (link.endsWith(filter)){
 				// CONST.log.info("read more " + link);
-		    	cnt = readHtml(link, json_config);
+				if (!f_html.exists()) {
+					try {
+					WebSpinner.down(link, f_html);
+					}catch (Exception e){
+						CONST.log.error("EE", e);
+						break;
+					}
+				} else {
+				}
+				Document doc_p = Jsoup.parse(new FileInputStream(f_html), "utf-8","");
+				
+		    	cnt = readHtml(doc_p, json_config);
 		    	if ("ERR".equals(cnt)){
-		    		Thread.sleep(30000);
-		    		cnt = readHtml(link, json_config);
+		    		break;
 		    	}
+
 		    }else{
 		    	// need this?
 		    	CONST.log.info("skip " + link);
 		    	continue;
 		    }
-			// write file
-			FileOutputStream output = new FileOutputStream(f_html);
-			output.write(cnt.getBytes());
-			output.flush();
-			output.close();
 			
 			
 			Whitelist wl = new Whitelist();
@@ -225,8 +233,11 @@ public class BlogSpinner {
 				
 			}
 			String content = docT.html();
-			bk.addString(href, ti, content);
-			bk_all.addString(href, ti, content);
+			int pos1 = href.lastIndexOf('.');
+//			if (){}
+			String sid = pos1 > 0 ? href.substring(0, pos1) : href;
+			bk.addString(sid, ti, content);
+			bk_all.addString(sid, ti, content);
 		}	
 
 			bk.writeEpub(outFile);
@@ -234,17 +245,11 @@ public class BlogSpinner {
 //		checkEpub(outFile.getAbsolutePath());
 		return newest_dt;
 	}
-	public String readHtml(String url, JSONObject json_config) throws Exception{
+	public String readHtml(org.jsoup.nodes.Document doc, JSONObject json_config) throws Exception{
 		String cnt = json_config.optString("cnt");
 		String s;
-		org.jsoup.nodes.Document doc=null;
+		
 		try{
-			doc = Jsoup.connect(url)
-				.userAgent("Opera/9.80 (X11; Linux x86_64; U; en) Presto/2.10.229 Version/11.61")
-				.header("Accept", "text/html")
-//				.data("wd", "Java")
-				  .timeout(35000)
-				  .get();
 
 			if (cnt.length() > 1){
 				s = doc.select(cnt).first().html();
@@ -257,12 +262,20 @@ public class BlogSpinner {
 			json_config.put("t_time", elm_t.select(".time").first().text());
 			
 			Element elm = doc.select(".articalfrontback2").first();
+			if (elm == null){
+				elm = doc.select(".articalfrontback").first();
+			}
 			Element elm_link = null;
 			Elements links = elm.select("a[href]");
 			if (links.size() == 1){
 				Element elm_l = elm.select(".SG_floatL").first();
 				if (elm_l != null){
 					elm_link = links.first();
+				} else {
+					String txt = elm.text();
+					if (txt.startsWith("前")){
+						elm_link = links.first();
+					}
 				}
 			} else {
 				elm_link = links.first();
@@ -274,7 +287,7 @@ public class BlogSpinner {
 			}
 
 		}catch (Exception e){
-			CONST.log.debug("e: "+ url, e);
+			CONST.log.debug("e: ", e);
 			s = "ERR";
 			if (doc != null){
 			String html = doc.html();

@@ -72,7 +72,7 @@ public class RssSpinner {
 //				if (!"blogjava".equals(id)){
 //					continue;
 //				}
-				bk_all.addString(id+".htm", title, "<p>"+title+ ", " + url+"</p>");
+				bk_all.addString(id, title, "<p>"+title+ ", " + url+"</p>");
 				// build rss book
 				long last_dt = readRss(url, id, title, old_last_dt, j);
 				// check update date

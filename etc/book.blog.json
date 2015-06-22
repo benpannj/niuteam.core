@@ -7,7 +7,7 @@
   },
   rss:[
     {
-      id:"chan",
+      id:"",
       title:"Chan",
       url:"http://blog.sina.com.cn/chzhshch",
       last_dt:0,
@@ -17,10 +17,14 @@
       cnt:"div.articalContent"
     },
     {
-      id:"",
-      title:"ArchLinux News",
-      url:"https://www.archlinux.org/feeds/news/",
-      last_dt:-1
+      id:"tyj",
+      title:"TYJ",
+      url:"http://blog.sina.com.cn/s/articlelist_1502087803_0_1.html",
+       last_dt:0,
+      filter:".html",
+      ext:"true",
+      img:"*.jshdsj",
+      cnt:"div.articalContent"
     }
   ]
 }

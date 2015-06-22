@@ -240,7 +240,7 @@ public final class OpfResource {
 			res.loadEntry(zf, item_href, type, base_path);
 			
 			// ADD for long file path
-			if (CONST.MIME.HTM.equals(type ) && item_href.length()>16){
+			if (CONST.MIME.HTM.equals(type ) && item_href.length()>26){
 				int i = item_href.lastIndexOf("/");
 				StringBuffer buf = new StringBuffer();
 				if (i > 0){
@@ -308,7 +308,8 @@ public final class OpfResource {
 		boolean exist = items.containsKey(id);
 		if (exist){
 			// remove old.
-			CONST.log.warn("exist: " + id);
+			CONST.log.error("ERROR: exist: " + id);
+			// res.setId();
 		}
 		items.put(id, res);
 		// 
@@ -455,9 +456,9 @@ public final class OpfResource {
 					for (String s : list){
 						i++;
 					
-						String href = res.getId()+"_"+String.format("%03d", i)+".htm";
-						CONST.log.info("huge size " + href + ", " + size);
-						StringResource res_s = new StringResource(href, null);
+						String sid = res.getId()+"_"+String.format("%03d", i);
+						CONST.log.info("huge size " + sid + ", " + size);
+						StringResource res_s = new StringResource(sid, null);
 						res_s.loadString(s);
 						addItem(res_s);
 					}

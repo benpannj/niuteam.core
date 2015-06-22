@@ -6,11 +6,12 @@
     host:"mail.google.com"
   },
   rss:[
+
     {
       id:"agBJB",
       title:"刘鹏程Sai.L - A股收盘小笔记",
       url:"http://zhuanlan.zhihu.com/agBJB",
-      last_dt:0,
+      last_dt:20078967,
       filter:".html",
       ext:"true",
       img:"*.*",
@@ -19,7 +20,9 @@
     {
       id:"",
       title:"ArchLinux News",
-      url:"https://www.archlinux.org/feeds/news/",
+      url:["http://www.zhihu.com/question/24743618/answer/28831368",
+      "http://www.zhihu.com/question/20782020/answer/30930737"
+      ,"http://www.zhihu.com/question/24894371"],
       last_dt:-1
     }
   ]

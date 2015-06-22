@@ -203,9 +203,9 @@ public class Epub {
 			for (String s : list){
 				i++;
 				
-				String href = res.getId()+"_"+String.format("%03d", i)+".htm";
-				CONST.log.info("huge size " + href);
-				StringResource res_s = new StringResource(href, null);
+				String id = res.getId()+"_"+String.format("%03d", i);
+				CONST.log.info("huge size " + id);
+				StringResource res_s = new StringResource(id, null);
 				res_s.loadString(s);
 				addResource(res_s);
 			}
@@ -220,13 +220,15 @@ public class Epub {
 	public void addItem(File f) throws Exception{
 		if (!f.exists() ) return;
 		String name = f.getName();
-		FileResource res = new FileResource(name);
+		int pos = name.lastIndexOf('.');
+		String sid = pos > 0 ? name.substring(0, pos): name;
+		FileResource res = new FileResource(sid);
 		res.loadFile(f);
 		opf.addItem(res);
 		ncx.addItem(res);
 	}
-	public void addString(String href, String title, String data) throws Exception{
-		StringResource res = new StringResource(href, title);
+	public void addString(String id, String title, String data) throws Exception{
+		StringResource res = new StringResource(id, title);
 		res.loadString(data);
 		opf.addItem(res);
 		ncx.addItem(res);

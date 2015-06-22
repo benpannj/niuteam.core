@@ -52,7 +52,7 @@ public class StringResource extends Resource {
 		this.data = s.getBytes("utf-8");
 		}catch(Exception e){}
 		mediaType = CONST.MIME.HTM;
-		href = "Text/" + this.getId();
+		href = "Text/" + this.getId()+".htm";
 	}
 	public long getSize(){
 		if (!CONST.MIME.HTM.equals(getMediaType()) ){

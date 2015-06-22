@@ -223,7 +223,7 @@ public class WebSpinner {
 		CONST.log.info("begin down: " + url);
 		Response request = Jsoup.connect(url).referrer(url)
 		.userAgent("Mozilla/5.0 (Windows NT 5.1; rv:2.0b6) Gecko/20100101 Firefox/4.0b6")
-		.execute();
+		.timeout(300000).execute();
 		FileOutputStream output = new FileOutputStream(f);
 		byte[] imgdata = request.bodyAsBytes();
 			output.write(imgdata);

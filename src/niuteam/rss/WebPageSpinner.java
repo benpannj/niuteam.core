@@ -182,8 +182,8 @@ public class WebPageSpinner {
 		docT.select("p").first().html(s);
 		String content = docT.html();
 		count++;
-		String href = "p"+String.format("%03d", count)+".htm";				
-		bk.addString(href, title, content);
+		String sid = "p"+String.format("%03d", count);				
+		bk.addString(sid, title, content);
 		
 		if (elm_index != null){
 			Elements links = elm_index.select("a[href]");

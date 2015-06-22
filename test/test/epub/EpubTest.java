@@ -131,7 +131,7 @@ public class EpubTest extends TestCase {
 //		File f = new File(IOUtil.getTempFolder(), "git.htm");
 //		bk.addItem(f);
 		// 
-		 bk.addString("test.htm", "test title", "<html><body>Hello, world!</body></html>");
+		 bk.addString("test", "test title", "<html><body>Hello, world!</body></html>");
 		
 		File outFile =  new File(IOUtil.getTempFolder(), "test_create.epub");
 		bk.writeEpub(outFile);
@@ -264,7 +264,7 @@ public class EpubTest extends TestCase {
 						bk.readEpub(f);
 //						bk.compact();
 					} else {
-						bk.addString("_test_"+count+ ".htm",name, "<html><body><h1>"+ name + "</h1></body></html>");
+						bk.addString("_test_"+count,name, "<html><body><h1>"+ name + "</h1></body></html>");
 						bk.addEpub(f, "bk"+String.format("%02d", count) );
 					}
 					count++;
@@ -376,12 +376,12 @@ public class EpubTest extends TestCase {
 		CONST.log.info("testImgExif E -----------------------------");
 	}
 //	@Test
-	public void testWebWpub()  throws Exception {
+	public void _testWebWpub()  throws Exception {
 		WebEpub e = new WebEpub();
 //		e.createFromWeiphone();
 		e.chanlun();
 	}
-	public void _testRssEpub()  throws Exception {
+	public void testRssEpub()  throws Exception {
 //		String url = "http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303";
 //		
 //		String s = WebSpinner.downZip(url);
@@ -394,10 +394,15 @@ public class EpubTest extends TestCase {
 //		e.webpage2epub();
 		
 //		BlogSpinner e = new BlogSpinner();
-//		e.rss2epub();
+//		e.blog2epub();
 
 		ZhihuSpinner e = new ZhihuSpinner();
-		e.init();
+		e.genEpub();
+
+		//String r = e.downZhuanlan("agBJB");
+		//CONST.log.debug(r);
+		
+		
 //		File f = new File(IOUtil.getTempFolder(), "aaa.htm");
 //		if (!f.exists()) return;
 //		FileInputStream ins = new FileInputStream(f);
@@ -407,8 +412,6 @@ public class EpubTest extends TestCase {
 //		ins.close();
 		
 //		Document doc = Jsoup.parse(ins, "utf-8","");
-		String r = e.downZhuanlan("agBJB");
-		CONST.log.debug(r);
 	}
 	public void _testJsoup() throws Exception{
 		String cnt = "div#content";
