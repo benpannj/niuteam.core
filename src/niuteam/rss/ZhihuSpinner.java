@@ -195,7 +195,8 @@ public class ZhihuSpinner {
 		return d_new.html();
 	}
     private Element img(Element elm_img, Epub book) throws Exception{
-    	
+    	// <div class="duokan-image-single"> 
+    	// </div>
 		String img_src = elm_img.attr(elm_img.hasAttr("data-original")? "data-original":"src");
 		elm_img.removeAttr("class");
 		String img_nm = img_src.substring(img_src.lastIndexOf('/')+1);
@@ -304,7 +305,7 @@ public class ZhihuSpinner {
 				}catch(Exception e){
 					CONST.log.debug("ERR: "  + id + ", "+ title +","+ img.html() , e);
 				}
-				doc.appendElement("p").appendChild(img);
+				doc.appendElement("div").attr("class", "duokan-image-single").appendChild(img);
 				}
 				// or http://zhuanlan.zhihu.com/api/columns/agBJB/posts/20074303
 				String cnt = j.getString("content");
@@ -330,7 +331,7 @@ public class ZhihuSpinner {
 						String url_img = s_img.substring(i_org, e_org);
 						Element e_img = doc.createElement("img").attr("src",url_img);
 						img(e_img, book);
-						doc.appendElement("p").appendChild(e_img);
+						doc.appendElement("div").attr("class", "duokan-image-single").appendChild(e_img);
 					} else {
 						CONST.log.debug("" + s_img);
 					}

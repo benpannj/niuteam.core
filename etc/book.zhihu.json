@@ -8,10 +8,30 @@
   rss:[
 
     {
+      id:"",
+      title:"迷思",
+      url:"http://zhuanlan.zhihu.com/prattle",
+      last_dt:20082260,
+      filter:".html",
+      ext:"true",
+      img:"*.*",
+      cnt:"div.articalContent"
+    },
+    {
       id:"agBJB",
       title:"刘鹏程Sai.L - A股收盘小笔记",
       url:"http://zhuanlan.zhihu.com/agBJB",
-      last_dt:20078967,
+      last_dt:20088301,
+      filter:".html",
+      ext:"true",
+      img:"*.*",
+      cnt:"div.articalContent"
+    },
+    {
+      id:"",
+      title:"Sai.L和大家聊金融的地方",
+      url:"http://zhuanlan.zhihu.com/sailv",
+      last_dt:20013092,
       filter:".html",
       ext:"true",
       img:"*.*",
@@ -20,10 +40,18 @@
     {
       id:"",
       title:"ArchLinux News",
-      url:["http://www.zhihu.com/question/24743618/answer/28831368",
-      "http://www.zhihu.com/question/20782020/answer/30930737"
-      ,"http://www.zhihu.com/question/24894371"],
+      url:[
+
+        "http://www.zhihu.com/question/24743618/answer/28831368",
+        "http://www.zhihu.com/question/20782020/answer/30930737",
+        "http://www.zhihu.com/question/24894371",
+        "http://www.zhihu.com/question/26190764",
+        "http://www.zhihu.com/question/26112913",
+        "http://www.zhihu.com/question/26103768",
+        "http://www.zhihu.com/question/26387062/answer/32801680"
+      ],
       last_dt:-1
     }
+
   ]
 }

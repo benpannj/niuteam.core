@@ -103,6 +103,7 @@ public class WebEpub {
 			int c_img = 0;
 			for (Iterator<Element> it = elm_imgs.iterator(); it.hasNext(); ){
 				org.jsoup.nodes.Element elm_img = it.next();
+				elm_img.parent().attr("class", "duokan-image-single");
 				String img_nm = id+String.format("%03d", c_img);
 				c_img++;
 				try{
