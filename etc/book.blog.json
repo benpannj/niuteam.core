@@ -6,6 +6,7 @@
     host:"mail.google.com"
   },
   rss:[
+
     {
       id:"",
       title:"Chan",
@@ -14,17 +15,48 @@
       filter:".html",
       ext:"true",
       img:"*.*",
+      cnt:"div.articalContent",
+      div_list:"div.articleList"
+    },
+    {
+      id:"",
+      title:"TYJ",
+      url:"http://blog.sina.com.cn/s/articlelist_1502087803_0_1.html",
+      last_dt:0,
+      tmpl:"sina",
+      img:"*.jshdsj",
       cnt:"div.articalContent"
     },
     {
-      id:"tyj",
-      title:"TYJ",
-      url:"http://blog.sina.com.cn/s/articlelist_1502087803_0_1.html",
-       last_dt:0,
-      filter:".html",
-      ext:"true",
-      img:"*.jshdsj",
-      cnt:"div.articalContent"
+      id:"matrix67",
+      title:"matrix67",
+      url:"http://www.matrix67.com/blog",
+      last_dt:0,
+      tmpl:"wordpress"
     }
-  ]
+  ],
+  tmpl:{
+    sina:{
+      next:"nexturl",
+      filter:".html",
+      cnt:"div.articalContent",
+      clean:"p,span,pre,code,ul,ol,li,sup",
+      img:"*.*",
+      div_list:"div.articleList"
+    },
+    wordpress:{
+      page:"/page/{0}",
+      page_start:1,
+      ti:"h1.entry-title",
+      cnt:"div.entry-content",
+      clean:"",
+      img:"*.*",
+      div_list:"article"
+    },
+    zhihu:{
+      page:"posts?limit=10&offset={1}",
+      cnt:"div.articalContent",
+      div_list:"div.articleList"
+    }
+  }
 }

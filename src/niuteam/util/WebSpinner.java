@@ -42,7 +42,7 @@ public class WebSpinner {
 		next = e_pg.select("a[href$="+next_url+"]").size() > 0;
 		
 		
-		InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
+		InputStream ins = IOUtil.loadTemplate(CONST.TMPL_HTM);
 //		StringWriter out2 = new StringWriter();
 //		IOUtil.copy(new InputStreamReader(ins, "utf-8"), out2 );
 		Document docT = Jsoup.parse(ins, "utf-8","");

@@ -190,7 +190,7 @@ public class RssSpinner {
 			wl.addTags("img").addAttributes("img","src","alt","real_src");
 			cnt = Jsoup.clean(cnt, wl);
 
-			InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
+			InputStream ins = IOUtil.loadTemplate(CONST.TMPL_HTM);
 			Document docT = Jsoup.parse(ins, "utf-8","");
 			docT.select("h2").first().html(ti);
 			docT.select("div").first().html(dt);

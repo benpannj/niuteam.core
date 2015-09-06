@@ -393,11 +393,11 @@ public class EpubTest extends TestCase {
 //		WebPageSpinner e = new WebPageSpinner();
 //		e.webpage2epub();
 		
-//		BlogSpinner e = new BlogSpinner();
-//		e.blog2epub();
+		BlogSpinner e = new BlogSpinner();
+		e.blog2epub();
 
-		ZhihuSpinner e = new ZhihuSpinner();
-		e.genEpub();
+//		ZhihuSpinner e = new ZhihuSpinner();
+//		e.genEpub();
 
 		//String r = e.downZhuanlan("agBJB");
 		//CONST.log.debug(r);

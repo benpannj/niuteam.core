@@ -38,7 +38,7 @@ public class TextResource extends Resource{
 		String content = txt2htm(out.toString(), title);
 		
 		
-		InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
+		InputStream ins = IOUtil.loadTemplate(CONST.TMPL_HTM);
 		StringWriter out2 = new StringWriter();
 		IOUtil.copy(new InputStreamReader(ins, "utf-8"), out2 );
 

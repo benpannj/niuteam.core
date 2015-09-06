@@ -175,7 +175,7 @@ public class WebPageSpinner {
 		//
 		s.replaceAll("&nbsp;", " ");
 
-		InputStream ins = IOUtil.loadTemplate("OEBPS/Text/c_00.htm");
+		InputStream ins = IOUtil.loadTemplate(CONST.TMPL_HTM);
 		Document docT = Jsoup.parse(ins, "utf-8","");
 		docT.select("h2").first().html(title);
 //		docT.select("div").first().html(dt);

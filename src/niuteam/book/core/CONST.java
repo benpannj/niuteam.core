@@ -47,6 +47,8 @@ public interface CONST {
 	
 	// char FRAGMENT_SEPARATOR_CHAR = '#';
 	String DEFAULT_TOC_ID = "toc";
+	String COVER_HTM = "OEBPS/Text/cover.htm";
+	String TMPL_HTM = "OEBPS/Text/c00.htm";
 	interface MIME {
 	String EPUB="application/epub+zip";
 	String NCX = "application/x-dtbncx+xml";
@@ -87,5 +89,6 @@ public interface CONST {
         
         String meta = "meta";
 	}
-
+	// Duokan image full screen.
+	public static final String DK_IMG = "duokan-image-single";
 }
