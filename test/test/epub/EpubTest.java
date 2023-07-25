@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipFile;
 
+import com.itextpdf.text.io.RandomAccessSourceFactory;
 import junit.framework.TestCase;
 import niuteam.book.core.CONST;
 import niuteam.book.epub.Epub;
@@ -24,7 +25,7 @@ import niuteam.util.IOUtil;
 import niuteam.util.PdfHelper;
 import niuteam.util.WebSpinner;
 
-import org.json.JSONObject;
+import com.cs.esp.org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -278,6 +279,7 @@ public class EpubTest extends TestCase {
 	public void _testPdf() throws Exception{
 //		File folder = new File("/mnt/DOC/Book2/5 哲学");
 //		fixPdf(folder);
+		RandomAccessSourceFactory fact = new RandomAccessSourceFactory();
 		String ss = PdfHelper.pdf2txt(IOUtil.getTempFolder()+"/p/ANSI_X12_850_purchase_order.pdf");
 		
 		CONST.log.debug(ss);
@@ -287,10 +289,12 @@ public class EpubTest extends TestCase {
 		if (!f1.exists()){
 			return;
 		}
+		String f_name = f1.getAbsolutePath();
+		RandomAccessFileOrArray rf = new RandomAccessFileOrArray(fact.createBestSource(f_name));
 //		PdfHelper.splitPDFFile(f1.getAbsolutePath(), 40);
 //		PdfHelper.removeBlankPdfPages(f1.getAbsolutePath(), "IOUtil.getTempFolder()/bak.pdf");
 //		PdfReader reader = new PdfReader(new FileInputStream(f1));
-		PdfReader reader = new PdfReader(new RandomAccessFileOrArray(f1.getAbsolutePath()), null);
+		PdfReader reader = new PdfReader(rf, null);
 //		reader.consolidateNamedDestinations();
 		// print meta info
 		HashMap map= reader.getInfo();
@@ -336,14 +340,14 @@ public class EpubTest extends TestCase {
 		
 //		reader.getPageN(0).getAsString(arg0)
 		byte[] streamBytes = reader.getPageContent(1);
-        PRTokeniser tokenizer = new PRTokeniser(streamBytes);
+        PRTokeniser tokenizer = new PRTokeniser(rf);
         StringWriter out = new StringWriter();
         while (tokenizer.nextToken()) {
-            int type = tokenizer.getTokenType();
+			PRTokeniser.TokenType type = tokenizer.getTokenType();
             String val = tokenizer.getStringValue();
-			if (type == PRTokeniser.TK_STRING) {
+			if (type == PRTokeniser.TokenType.STRING) {
 				out.write(val);
-            } else if ( type == PRTokeniser.TK_NUMBER ){
+            } else if ( type == PRTokeniser.TokenType.NUMBER ){
 				// out.write(val);
             } else {
             	CONST.log.info("type " + type + val);

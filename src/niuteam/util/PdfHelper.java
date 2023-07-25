@@ -263,7 +263,8 @@ public class PdfHelper {
 				System.out.println("Checking for Acroforms");
 				PRAcroForm form = reader.getAcroForm();
 				if (form != null) {
-					writer.copyAcroForm(reader);
+//					writer.copyAcroForm(reader);
+					writer.copyDocumentFields(reader);
 					System.out.println("Acroforms found and copied");
 				} else
 					System.out.println("Acroforms not found for this file");
@@ -397,11 +398,11 @@ public class PdfHelper {
 
             //loop through each page and if the bs is larger than 20 than we know it is not blank.
             //if it is less than 20 than we don't include that blank page.
-        	PdfTextExtractor p = new PdfTextExtractor(r);
+//        	PdfTextExtractor p = new PdfTextExtractor(r);
         	 // PdfReaderContentParser
             for (int i=1;i<=r.getNumberOfPages();i++)
             {
-            	String page = p.getTextFromPage(i);
+            	String page = PdfTextExtractor.getTextFromPage(r, i);
 //            	CONST.log.info(" "+ page );
             	buf.append(page);
                 //get the page content

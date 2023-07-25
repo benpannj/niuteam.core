@@ -90,11 +90,11 @@ public class Exif {
 				}
 			}else {
 				Directory exif_sub;
-				exif_sub = metadata.getDirectory(ExifSubIFDDirectory.class);
+				exif_sub = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
 				if (exif_sub != null) {
 					date = exif_sub.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
 				}
-				Directory exif_ifd0 = metadata.getDirectory(ExifIFD0Directory.class);
+				Directory exif_ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
 				if (exif_ifd0 != null) {
 					productor = exif_ifd0.getDescription( ExifIFD0Directory.TAG_MAKE);
 					if (date == null){
